@@ -1,0 +1,1095 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>JAI BHIM PRATIBHA VIKAS YOJNA — Student Portal</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#F2F0EB;--surface:#FFFFFF;--surface2:#F7F5F0;--surface3:#EDE9E1;
+  --border:#E0DBD0;--border2:#C8C2B4;
+  --text:#1C1917;--text2:#6B6560;--text3:#9C9690;
+  --blue:#1D4ED8;--blue-bg:#EFF6FF;--blue-light:#DBEAFE;--blue-dark:#1E3A8A;
+  --green:#15803D;--green-bg:#F0FDF4;--green-light:#DCFCE7;
+  --amber:#B45309;--amber-bg:#FFFBEB;--amber-light:#FEF3C7;
+  --red:#B91C1C;--red-bg:#FEF2F2;--red-light:#FEE2E2;
+  --orange:#C2410C;--orange-bg:#FFF7ED;--orange-light:#FFEDD5;
+  --purple:#6D28D9;--purple-bg:#F5F3FF;--purple-light:#EDE9FE;
+  --teal:#0F766E;--teal-bg:#F0FDFA;--teal-light:#CCFBF1;
+  --radius:8px;--radius-lg:14px;--radius-xl:20px;
+  --shadow:0 1px 3px rgba(0,0,0,.06),0 2px 8px rgba(0,0,0,.04);
+  --shadow-md:0 4px 16px rgba(0,0,0,.08),0 1px 4px rgba(0,0,0,.04);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;font-size:14px;line-height:1.5}
+/* ── LOGIN ── */
+.login-screen{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:1rem;background:var(--bg)}
+.login-box{background:var(--surface);border-radius:var(--radius-xl);border:1px solid var(--border);padding:2.5rem 2rem;width:100%;max-width:400px;box-shadow:var(--shadow-md)}
+.login-brand{text-align:center;margin-bottom:2rem}
+.login-brand .org{font-size:11px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.1em;margin-bottom:6px}
+.login-brand h1{font-size:18px;font-weight:700;color:var(--blue-dark);line-height:1.3}
+.login-brand p{font-size:12px;color:var(--text2);margin-top:4px}
+.lf-group{margin-bottom:1rem}
+.lf-group label{display:block;font-size:12px;font-weight:600;color:var(--text2);margin-bottom:5px}
+.lf-group input{width:100%;padding:10px 14px;border:1.5px solid var(--border2);border-radius:var(--radius);font-size:14px;font-family:inherit;background:var(--surface);color:var(--text);outline:none;transition:border-color .15s,box-shadow .15s}
+.lf-group input:focus{border-color:var(--blue);box-shadow:0 0 0 3px rgba(29,78,216,.1)}
+.btn-signin{width:100%;padding:12px;background:var(--blue);color:#fff;border:none;border-radius:var(--radius);font-size:14px;font-weight:700;font-family:inherit;cursor:pointer;transition:background .15s;letter-spacing:.01em}
+.btn-signin:hover{background:var(--blue-dark)}
+.login-hint{margin-top:1rem;padding:10px 14px;background:var(--surface2);border-radius:var(--radius);font-size:12px;color:var(--text2);text-align:center}
+.login-err{display:none;color:var(--red);font-size:12px;text-align:center;margin-top:.5rem;font-weight:500}
+/* ── APP SHELL ── */
+.app-shell{display:none;min-height:100vh}
+.sidebar{width:240px;background:var(--surface);border-right:1px solid var(--border);position:fixed;top:0;left:0;height:100vh;display:flex;flex-direction:column;z-index:50;transition:transform .25s}
+.sb-header{padding:1.25rem 1.1rem 1rem;border-bottom:1px solid var(--border)}
+.sb-header .org-tag{font-size:10px;font-weight:700;color:var(--blue);text-transform:uppercase;letter-spacing:.08em;margin-bottom:4px}
+.sb-header h2{font-size:14px;font-weight:700;color:var(--text);line-height:1.3}
+.sb-nav{flex:1;padding:.75rem .6rem;overflow-y:auto}
+.nav-btn{display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:var(--radius);cursor:pointer;font-size:13px;font-weight:500;color:var(--text2);background:none;border:none;width:100%;text-align:left;font-family:inherit;transition:background .12s,color .12s;margin-bottom:2px}
+.nav-btn svg{width:16px;height:16px;flex-shrink:0}
+.nav-btn:hover{background:var(--surface2);color:var(--text)}
+.nav-btn.active{background:var(--blue-bg);color:var(--blue-dark);font-weight:600}
+.sb-footer{padding:1rem;border-top:1px solid var(--border)}
+.sb-user{font-size:13px;font-weight:600;color:var(--text)}
+.sb-role{font-size:11px;color:var(--text3);margin-top:1px}
+.btn-logout{margin-top:10px;width:100%;padding:7px;background:none;border:1.5px solid var(--border2);border-radius:var(--radius);font-size:12px;font-family:inherit;cursor:pointer;color:var(--text2);transition:all .15s}
+.btn-logout:hover{background:var(--red-bg);border-color:var(--red);color:var(--red)}
+.main{margin-left:240px;padding:1.75rem;min-height:100vh}
+/* ── TOPBAR ── */
+.topbar{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:1.75rem;gap:1rem;flex-wrap:wrap}
+.topbar h1{font-size:22px;font-weight:700}
+.topbar p{font-size:13px;color:var(--text2);margin-top:3px}
+/* ── STATS ── */
+.stats-row{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:12px;margin-bottom:1.5rem}
+.stat{background:var(--surface);border-radius:var(--radius-lg);border:1px solid var(--border);padding:1rem 1.1rem;box-shadow:var(--shadow)}
+.stat-lbl{font-size:11px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.05em;margin-bottom:5px}
+.stat-val{font-size:26px;font-weight:700}
+.stat-sub{font-size:11px;color:var(--text2);margin-top:3px}
+/* ── CARD ── */
+.card{background:var(--surface);border-radius:var(--radius-lg);border:1px solid var(--border);padding:1.25rem;margin-bottom:1.25rem;box-shadow:var(--shadow)}
+/* ── TOOLBAR ── */
+.toolbar{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:1rem}
+.toolbar input,.toolbar select{padding:8px 12px;border:1.5px solid var(--border2);border-radius:var(--radius);font-size:13px;font-family:inherit;background:var(--surface);color:var(--text);outline:none;transition:border-color .15s}
+.toolbar input{flex:1;min-width:200px}
+.toolbar input:focus,.toolbar select:focus{border-color:var(--blue)}
+/* ── BUTTONS ── */
+.btn{padding:8px 16px;border:1.5px solid var(--border2);border-radius:var(--radius);cursor:pointer;font-size:13px;font-weight:500;font-family:inherit;background:var(--surface);color:var(--text);white-space:nowrap;transition:all .12s}
+.btn:hover{background:var(--surface2)}
+.btn-primary{background:var(--blue);color:#fff;border-color:var(--blue);font-weight:600}
+.btn-primary:hover{background:var(--blue-dark);border-color:var(--blue-dark)}
+.btn-sm{padding:5px 10px;font-size:12px}
+.btn-danger{border-color:#FCA5A5;color:var(--red)}
+.btn-danger:hover{background:var(--red-bg)}
+.btn-success{background:var(--green);color:#fff;border-color:var(--green)}
+.btn-success:hover{background:#166534}
+/* ── TABLE ── */
+.tbl-wrap{overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-size:13px;min-width:900px}
+th{text-align:left;padding:9px 12px;border-bottom:1.5px solid var(--border);color:var(--text3);font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;background:var(--surface2);white-space:nowrap}
+td{padding:9px 12px;border-bottom:1px solid var(--border);vertical-align:middle}
+tbody tr:hover td{background:var(--surface2)}
+tr.dup-row td{background:#FEF9C3 !important;border-left:3px solid #CA8A04}
+tr.dup-row:hover td{background:#FEF08A !important}
+/* ── PILLS ── */
+.pill{display:inline-flex;align-items:center;gap:4px;padding:2px 9px;border-radius:9999px;font-size:11px;font-weight:600;white-space:nowrap}
+.p-ok{background:var(--green-light);color:var(--green)}
+.p-notok{background:var(--red-light);color:var(--red)}
+.p-rejected{background:#F1F5F9;color:#475569}
+.p-sc{background:var(--blue-light);color:var(--blue-dark)}
+.p-st{background:var(--purple-light);color:var(--purple)}
+.p-obc{background:var(--amber-light);color:var(--amber)}
+.p-general{background:var(--surface2);color:var(--text2)}
+.p-dup{background:#FEF9C3;color:#92400E;border:1px solid #FDE047}
+/* ── DUPLICATE WARNING ── */
+.dup-banner{background:#FFFBEB;border:1.5px solid #FCD34D;border-radius:var(--radius-lg);padding:1rem 1.25rem;margin-bottom:1rem;display:none}
+.dup-banner-title{font-size:13px;font-weight:700;color:#92400E;margin-bottom:6px;display:flex;align-items:center;gap:6px}
+.dup-banner ul{font-size:12px;color:#92400E;padding-left:1.25rem}
+.dup-banner li{margin-bottom:3px}
+/* ── MODAL ── */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:200;display:flex;align-items:center;justify-content:center;padding:1rem;backdrop-filter:blur(2px)}
+.modal{background:var(--surface);border-radius:var(--radius-xl);padding:1.5rem;width:100%;max-width:640px;max-height:92vh;overflow-y:auto;box-shadow:0 25px 60px rgba(0,0,0,.2);border:1px solid var(--border)}
+.modal-hdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:1.25rem;padding-bottom:1rem;border-bottom:1px solid var(--border)}
+.modal-hdr h3{font-size:17px;font-weight:700}
+.close-btn{background:none;border:none;font-size:22px;cursor:pointer;color:var(--text3);line-height:1;padding:0 4px;transition:color .12s}
+.close-btn:hover{color:var(--text)}
+.form-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
+.fg{display:flex;flex-direction:column;gap:5px}
+.fg label{font-size:12px;font-weight:600;color:var(--text2)}
+.fg input,.fg select,.fg textarea{padding:9px 12px;border:1.5px solid var(--border2);border-radius:var(--radius);font-size:13px;font-family:inherit;background:var(--surface);color:var(--text);outline:none;transition:border-color .15s}
+.fg input:focus,.fg select:focus,.fg textarea:focus{border-color:var(--blue);box-shadow:0 0 0 3px rgba(29,78,216,.08)}
+.fg input.field-dup{border-color:#F59E0B;background:#FFFBEB}
+.fg textarea{resize:vertical;min-height:64px}
+.fg-full{grid-column:1/-1}
+.form-actions{display:flex;gap:8px;justify-content:flex-end;margin-top:1.25rem;padding-top:1rem;border-top:1px solid var(--border)}
+/* ── SECTION HEADERS ── */
+.sec-hdr{font-size:11px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.06em;margin:1.25rem 0 .75rem;padding-bottom:6px;border-bottom:1px solid var(--border)}
+/* ── PROFILE VIEW ── */
+.profile-top{display:flex;align-items:center;gap:14px;padding-bottom:1.1rem;margin-bottom:1.1rem;border-bottom:1px solid var(--border)}
+.profile-av{width:54px;height:54px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:20px;font-weight:700;flex-shrink:0}
+.detail-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin-bottom:.75rem}
+.di .di-l{font-size:11px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.04em;margin-bottom:3px}
+.di .di-v{font-size:13px;color:var(--text)}
+/* ── DOCS ── */
+.docs-zone{border:2px dashed var(--border2);border-radius:var(--radius-lg);padding:1.5rem;text-align:center;cursor:pointer;transition:all .15s;background:var(--surface2)}
+.docs-zone:hover,.docs-zone.drag-over{border-color:var(--blue);background:var(--blue-bg)}
+.docs-zone p{font-size:13px;color:var(--text2);margin-top:6px}
+.docs-zone .hint{font-size:11px;color:var(--text3);margin-top:4px}
+.doc-list{display:flex;flex-direction:column;gap:8px;margin-top:10px}
+.doc-item{display:flex;align-items:center;gap:10px;padding:10px 12px;background:var(--surface2);border-radius:var(--radius);border:1px solid var(--border)}
+.doc-thumb{width:36px;height:36px;border-radius:6px;object-fit:cover;flex-shrink:0;border:1px solid var(--border)}
+.doc-pdf-icon{width:36px;height:36px;border-radius:6px;background:var(--red-bg);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:var(--red);flex-shrink:0}
+.doc-name{flex:1;font-size:12px;font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.doc-size{font-size:11px;color:var(--text3)}
+.doc-del{background:none;border:none;cursor:pointer;color:var(--text3);font-size:16px;padding:2px;transition:color .12s}
+.doc-del:hover{color:var(--red)}
+.doc-view{background:none;border:none;cursor:pointer;color:var(--blue);font-size:12px;font-weight:600;font-family:inherit;padding:2px 6px}
+/* ── PAGER ── */
+.pager{display:flex;align-items:center;justify-content:space-between;margin-top:12px;font-size:12px;color:var(--text2);flex-wrap:wrap;gap:8px}
+.pager-btns{display:flex;gap:4px}
+.pb{padding:4px 10px;border:1.5px solid var(--border2);border-radius:var(--radius);cursor:pointer;font-size:12px;font-family:inherit;background:var(--surface);color:var(--text)}
+.pb:disabled{opacity:.35;cursor:default}
+.pb.cur{background:var(--blue);color:#fff;border-color:var(--blue)}
+/* ── TOAST ── */
+.toast{position:fixed;bottom:1.5rem;right:1.5rem;padding:11px 18px;border-radius:var(--radius-lg);font-size:13px;font-weight:600;z-index:999;opacity:0;transform:translateY(8px);transition:all .25s;pointer-events:none;max-width:320px;box-shadow:var(--shadow-md)}
+.toast.show{opacity:1;transform:translateY(0)}
+.toast-success{background:#1C4532;color:#D1FAE5}
+.toast-error{background:#7F1D1D;color:#FEE2E2}
+.toast-warn{background:#78350F;color:#FEF3C7}
+/* ── HIGHLIGHT BADGE ── */
+.dup-badge{display:inline-flex;align-items:center;gap:3px;padding:1px 7px;border-radius:9999px;font-size:10px;font-weight:700;background:#FEF9C3;color:#92400E;border:1px solid #FDE047;margin-left:6px}
+/* ── MOBILE ── */
+.mob-toggle{display:none;position:fixed;top:1rem;left:1rem;z-index:60;background:var(--surface);border:1.5px solid var(--border2);border-radius:var(--radius);padding:8px;cursor:pointer;box-shadow:var(--shadow)}
+.sb-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:40}
+@media(max-width:800px){
+  .mob-toggle{display:flex}
+  .sidebar{transform:translateX(-100%)}
+  .sidebar.open{transform:translateX(0)}
+  .sb-overlay.open{display:block}
+  .main{margin-left:0;padding:1rem;padding-top:4.5rem}
+  .stats-row{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .form-grid{grid-template-columns:1fr}
+}
+@media(max-width:480px){
+  .stats-row{grid-template-columns:repeat(2,minmax(0,1fr))}
+}
+/* ── SAVED BADGE ── */
+.saved-tag{font-size:11px;padding:4px 10px;border-radius:var(--radius);background:var(--green-light);color:var(--green);font-weight:600;display:none}
+/* ── DOC VIEWER ── */
+.doc-viewer-modal{background:var(--surface);border-radius:var(--radius-xl);padding:1.5rem;width:100%;max-width:800px;max-height:92vh;display:flex;flex-direction:column;gap:1rem}
+.doc-viewer-modal img{max-width:100%;border-radius:var(--radius);border:1px solid var(--border)}
+.doc-viewer-modal iframe{width:100%;height:500px;border:none;border-radius:var(--radius);background:#f5f5f5}
+/* ── IMPORT BAR ── */
+.import-bar{display:flex;align-items:center;gap:8px;padding:10px 14px;background:var(--blue-bg);border-radius:var(--radius);border:1px solid var(--blue-light);margin-bottom:1rem;font-size:13px;color:var(--blue-dark)}
+.import-bar strong{font-weight:700}
+</style>
+</head>
+<body>
+
+<!-- LOGIN -->
+<div class="login-screen" id="loginScreen">
+  <div class="login-box">
+    <div class="login-brand">
+      <div class="org">St. Joan's Education Society</div>
+      <h1>JAI BHIM PRATIBHA VIKAS YOJNA</h1>
+      <p>Student Management Portal</p>
+    </div>
+    <div class="lf-group"><label>Username</label><input type="text" id="loginUser" placeholder="Enter username" autocomplete="username"></div>
+    <div class="lf-group"><label>Password</label><input type="password" id="loginPass" placeholder="Enter password" autocomplete="current-password" onkeydown="if(event.key==='Enter')doLogin()"></div>
+    <button class="btn-signin" onclick="doLogin()">Sign In</button>
+    <div class="login-err" id="loginErr">Invalid username or password.</div>
+    <div class="login-hint">Default login: <strong>admin</strong> / <strong>sachdeva123</strong></div>
+  </div>
+</div>
+
+<!-- APP -->
+<div class="app-shell" id="appShell">
+  <button class="mob-toggle" onclick="toggleSidebar()">
+    <svg width="18" height="18" viewBox="0 0 18 18" fill="none"><rect y="3" width="18" height="2" rx="1" fill="currentColor"/><rect y="8" width="18" height="2" rx="1" fill="currentColor"/><rect y="13" width="18" height="2" rx="1" fill="currentColor"/></svg>
+  </button>
+  <div class="sb-overlay" id="sbOverlay" onclick="toggleSidebar()"></div>
+
+  <aside class="sidebar" id="sidebar">
+    <div class="sb-header">
+      <div class="org-tag">St. Joan's Education Society</div>
+      <h2>Pratibha Vikas Yojna Portal</h2>
+    </div>
+    <nav class="sb-nav">
+      <button class="nav-btn active" id="nb-dashboard" onclick="goTab('dashboard')">
+        <svg viewBox="0 0 16 16" fill="none"><rect x="1" y="1" width="6" height="6" rx="1.5" fill="currentColor"/><rect x="9" y="1" width="6" height="6" rx="1.5" fill="currentColor" opacity=".4"/><rect x="1" y="9" width="6" height="6" rx="1.5" fill="currentColor" opacity=".4"/><rect x="9" y="9" width="6" height="6" rx="1.5" fill="currentColor" opacity=".4"/></svg>
+        Dashboard
+      </button>
+      <button class="nav-btn" id="nb-students" onclick="goTab('students')">
+        <svg viewBox="0 0 16 16" fill="none"><circle cx="8" cy="5" r="3" fill="currentColor"/><path d="M2 14c0-3.314 2.686-6 6-6s6 2.686 6 6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+        All Students
+      </button>
+      <button class="nav-btn" id="nb-duplicates" onclick="goTab('duplicates')">
+        <svg viewBox="0 0 16 16" fill="none"><path d="M8 2L9.5 6H14L10.5 8.5L12 13L8 10.5L4 13L5.5 8.5L2 6H6.5L8 2Z" fill="currentColor"/></svg>
+        Duplicate Check
+      </button>
+      <button class="nav-btn" id="nb-add" onclick="goTab('add')">
+        <svg viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="6.5" stroke="currentColor" stroke-width="1.5"/><path d="M8 5v6M5 8h6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+        Add Student
+      </button>
+    </nav>
+    <div class="sb-footer">
+      <div class="sb-user" id="sbUser">Admin</div>
+      <div class="sb-role">Administrator</div>
+      <button class="btn-logout" onclick="doLogout()">Sign Out</button>
+    </div>
+  </aside>
+
+  <main class="main" id="mainArea"></main>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ═══════════════════════════════
+//  CONFIG
+// ═══════════════════════════════
+const CREDS = { admin:'sachdeva123', prashant:'college2024' };
+const STORE = 'jbpvy_students_v1';
+const SES   = 'jbpvy_session';
+
+// ═══════════════════════════════
+//  SEED DATA (from Excel)
+// ═══════════════════════════════
+const SEED_DATA = [{"id": 1, "name": "MADHUBALA", "fatherName": "MR. RADHA MOHAN", "address": "Q 1593, LODHI ROAD COMPLEX, NEW DELHI 3", "dob": "26/02/2004", "aadhar": "326027382349", "category": "SC", "course": "Medical", "duration": "11 MONTHS", "center": "Lodhi Road", "email": "madhumadhusingh045@gmail.com", "mobile": "9354285912 9968534755", "casteCert": "-", "incomeCert": "-", "partAB": "YES", "status": "NOT OK", "docs": []}, {"id": 2, "name": "ANUJ KUMAR", "fatherName": "MR. SITARAM", "address": "K\\85, JAITPUR EXT., PART 1,BADARPUR, NEW DELHI 44", "dob": "12/10/2001", "aadhar": "717063965782", "category": "SC", "course": "Medical", "duration": "11 MONTHS", "center": "Lodhi Road", "email": "anujkumar70536@gmail.com", "mobile": "9899733752, 7053655999", "casteCert": "-", "incomeCert": "-", "partAB": "YES", "status": "OK", "docs": []}, {"id": 3, "name": "ISHA VEDWAL", "fatherName": "MR.NAND KISHORE VEDWAL", "address": "F-376, PHASE 6, AYA NAGAR, EXTN., NEW DELHI 47", "dob": "22/10/2004", "aadhar": "910431582147", "category": "SC", "course": "Medical", "duration": "11 MONTHS", "center": "Lodhi Road", "email": "ishavedwal@gmail.com", "mobile": "9717069267", "casteCert": "-", "incomeCert": "-", "partAB": "YES", "status": "OK", "docs": []}, {"id": 4, "name": "PRASHANT KUMAR", "fatherName": "MR. B. L. SHAILESH", "address": "132-A, NAVJIWAN CAMP, KALKAJI, NEW DELHI 19", "dob": "17/12/2003", "aadhar": "592525502242", "category": "SC", "course": "Engineering", "duration": "11 MONTHS", "center": "Lodhi Road", "email": "prashantK7705@gmail.com", "mobile": "9811035989, 9821794099", "casteCert": "-", "incomeCert": "-", "partAB": "YES", "status": "OK", "docs": []}, {"id": 5, "name": "TUSHAR", "fatherName": "MR. VISHAN LAL", "address": "11/8, SEWA NAGAR, RAILWAY COLONY, NEW DELHI 110003", "dob": "29/03/2004", "aadhar": "643523319980", "category": "SC", "course": "Medical", "duration": "11 MONTHS", "center": "Lodhi Road", "email": "tushargaur618@gmail.com", "mobile": "9911204407, 9310191814", "casteCert": "-", "incomeCert": "-", "partAB": "YES", "status": "OK", "docs": []}, {"id": 6, "name": "ABHIMANYU", "fatherName": "MR. RAJESH KUMAR", "address": "C-184/A, NAVJEEWAN CAMP KALKAJI NEW DELHI 110019", "dob": "30/06/2003", "aadhar": "445010252714", "category": "SC", "course": "Engineering", "duration": "11 MONTHS", "center": "Lodhi Road", "email": "abhimanyuakm847@gmail.com", "mobile": "8010232258", "casteCert": "-", "incomeCert": "-", "partAB": "YES", "status": "OK", "docs": []}, {"id": 7, "name": "PRERNA", "fatherName": "MR. RAJESH KUMAR PAHADIA", "address": "B SECOND 331 MADANGIR  NEW DELHI 110062", "dob": "01/02/2002", "aadhar": "844627623476", "category": "SC", "course": "Medical", "duration": "11 MONTHS", "center": "Lodhi Road", "email": "prernapahadia001@gmail.com", "mobile": "9911378378", "casteCert": "-", "incomeCert": "-", "partAB": "YES", "status": "NOT OK", "docs": []}, {"id": 8, "name": "YASH", "fatherName": "MR. PRADEEP KUMAR", "address": "7A, BAZAR LANE, BHOGAL, JANGPURA, NEW DELHI 14", "dob": "27/05/2002", "aadhar": "507448235571", "category": "SC", "course": "Engineering", "duration": "11 MONTHS", "center": "Lodhi Road", "email": "pradeepkumar2551970@gmail.com", "mobile": "9205042737", "casteCert": "-", "incomeCert": "-", "partAB": "NO", "status": "Rejected", "docs": []}, {"id": 9, "name": "GAURAV", "fatherName": "MR. ASHOK KUMAR", "address": "C1/823, MADANGIRI, AMBEDKAR NAGAR, NEW DELHI 62", "dob": "16/03/2004", "aadhar": "207587400699", "category": "SC", "course": "Medical", "duration": "11 MONTHS", "center": "Lodhi Road", "email": "gauravkumar89197@gmail.com", "mobile": "8010853831, 7836883343", "casteCert": "-", "incomeCert": "-", "partAB": "YES", "status": "OK", "docs": []}, {"id": 10, "name": "KANISHK CHAUDHARY", "fatherName": "MR. PREM  RAJ", "address": "1825, RAVI DASS BASTI, UDAY CHAND MARG, KOTLA MUBARAKPUR, NEW DELHI 03", "dob": "27/12/2004", "aadhar": "904098769652", "category": "SC", "course": "Engineering", "duration": "11 MONTHS", "center": "Lodhi Road", "email": "prem77raj@gmail.com", "mobile": "9999307774, 7838549960", "casteCert": "-", "incomeCert": "-", "partAB": "YES", "status": "NOT OK", "docs": []}, {"id": 11, "name": "SIMRAN", "fatherName": "NARESH KUMAR", "address": "HNO. 461, MADANPUR, KHADAR, SARITA VIHAR NEW DELHI 76", "dob": "02/11/2003", "aadhar": "943172094770", "category": "SC", "course": "Medical", "duration": "11 MONTHS", "center": "Lodhi Road", "email": "simran.11thb@gmail.com", "mobile": "9871305342, 7678621110", "casteCert": "-", "incomeCert": "-", "partAB": "YES", "status": "OK", "docs": []}, {"id": 12, "name": "RITIKA", "fatherName": "MR. VINOD KUMAR", "address": "A-264, DAKSHIN PURI, DR. AMBEDKAR NAGAR, NEW DELHI 62", "dob": "18/07/2004", "aadhar": "282370501480", "category": "SC", "course": "Engineering", "duration": "11 MONTHS", "center": "Lodhi Road", "email": "ritikakhannavmp@gmail.com", "mobile": "9958238805", "casteCert": "-", "incomeCert": "-", "partAB": "YES", "status": "NOT OK", "docs": []}, {"id": 13, "name": "DEEPANSHU CHANDER  YADUVANSHI", "fatherName": "MR. SUBHASH CHANDER", "address": "J-400 DR.AMBEDKAR NAGAR SEC-5, NEW DELHI110062", "dob": "09/01/2003", "aadhar": "605437092908", "category": "SC", "course": "Engineering", "duration": "11 MONTHS", "center": "Lodhi Road", "email": "yaduvanshid19@gmail.com", "mobile": "9315108099", "casteCert": "-", "incomeCert": "-", "partAB": "YES", "status": "OK", "docs": []}, {"id": 14, "name": "NISHITA SAGAR", "fatherName": "MR. MANOJ KUMAR", "address": "141, MASIJID MOTH, SOUTH X PART 2 NEW DELHI 49", "dob": "28/07/2004", "aadhar": "215645402244", "category": "SC", "course": "Medical", "duration": "11 MONTHS", "center": "Lodhi Road", "email": "nishitasagar1234@gmail.com", "mobile": "9999361563", "casteCert": "-", "incomeCert": "-", "partAB": "YES", "status": "OK", "docs": []}, {"id": 15, "name": "SHIVAM", "fatherName": "MR. SURESH KUMAR", "address": "456, SECTOR 5, R.K PURAM, NEW DELHI 22", "dob": "25/07/2004", "aadhar": "503146095098", "category": "SC", "course": "Engineering", "duration": "11 MONTHS", "center": "Lodhi Road", "email": "shivamtaak0025@gmail.com", "mobile": "9599361702", "casteCert": "Not found on portal", "incomeCert": "YES", "partAB": "NO", "status": "OK", "docs": []}, {"id": 16, "name": "PANKAJ KUMAR", "fatherName": "MR. HARSWAROOP", "address": "C-8/159 B, SANGAM VIHAR, MEHRAULI, SOUTH DELHI DELHI 62", "dob": "07/01/2002", "aadhar": "931465765595", "category": "SC", "course": "Engineering", "duration": "11 MONTHS", "center": "Lodhi Road", "email": "harwaroop@gmail.com", "mobile": "8527752524", "casteCert": "-", "incomeCert": "-", "partAB": "YES", "status": "OK", "docs": []}, {"id": 17, "name": "JITENDER PRASAD ARYA", "fatherName": "MR. PURAN RAM ARYA", "address": "DELHI BLUE APARTMENT, 2 FACTORY ROAD, SAFDERJUNG RING ROAD, NEW DELHI 29", "dob": "27/08/2004", "aadhar": "935195485592", "category": "SC", "course": "Engineering", "duration": "11 MONTHS", "center": "Lodhi Road", "email": "jitenderarya856@gmail.com", "mobile": "7982205873", "casteCert": "-", "incomeCert": "-", "partAB": "YES", "status": "OK", "docs": []}, {"id": 18, "name": "VISHAL KUMAR", "fatherName": "MR. TEJPAL", "address": "S-291/59, SONIA GANDHI CAMP II, PUL PEHLAD PUR, NEW DELHI 44", "dob": "10/10/2002", "aadhar": "510091537298", "category": "SC", "course": "Medical", "duration": "11 MONTHS", "center": "Lodhi Road", "email": "kumarvishal2059@gmail.com", "mobile": "8700402417", "casteCert": "-", "incomeCert": "-", "partAB": "YES", "status": "OK", "docs": []}, {"id": 19, "name": "NAMAN GAUTAM", "fatherName": "MR. PARAS RAM GAUTAM", "address": "B-1/2, SIDDHARTHA NAGAR, HARI NAGAR, ASHRAM NEW DELHI 14", "dob": "06/06/2001", "aadhar": "478669363327", "category": "SC", "course": "Medical", "duration": "11 MONTHS", "center": "Lodhi Road", "email": "namangautam081@gmail.com", "mobile": "9891393603", "casteCert": "-", "incomeCert": "-", "partAB": "YES", "status": "NOT OK", "docs": []}, {"id": 20, "name": "KASHISH", "fatherName": "MR. JUGAL KISHORE RAJ", "address": "89, HARIJAN BASTI, RAJOKARI, SOUTH WEST DELHI, DELHI 38", "dob": "06/01/2004", "aadhar": "247306751540", "category": "SC", "course": "Engineering", "duration": "11 MONTHS", "center": "Lodhi Road", "email": "lohmodkashish@gmail.com", "mobile": "8595473904", "casteCert": "-", "incomeCert": "-", "partAB": "YES", "status": "NOT OK", "docs": []}, {"id": 21, "name": "AISHVARYA", "fatherName": "MR. JUGAL KISHORE RAJ", "address": "89, HARIJAN BASTI, RAJOKARI, NEW DELHI 38", "dob": "04/08/2002", "aadhar": "438616470484", "category": "SC", "course": "Medical", "duration": "11 MONTHS", "center": "Lodhi Road", "email": "lohmodaishvarya@gmail.com", "mobile": "8595473904", "casteCert": "-", "incomeCert": "-", "partAB": "YES", "status": "OK", "docs": []}, {"id": 22, "name": "RISHABH KUMAR", "fatherName": "MR. VINAY KUMAR", "address": "D-10, TYPE 1, SAFDERJUNG HOSPITAL STAFF QUARTERS, WEST KIDWAI NAGAR, NEW DELHI 23", "dob": "31/05/2004", "aadhar": "249184054642", "category": "SC", "course": "Engineering", "duration": "11 MONTHS", "center": "Lodhi Road", "email": "rishabhkumar31504@gmail.com", "mobile": "9199156404", "casteCert": "-", "incomeCert": "-", "partAB": "YES", "status": "OK", "docs": []}, {"id": 23, "name": "HIMANDRI", "fatherName": "MR. SANJAY KUMAR", "address": "92, LODHI ROAD COMPLEX, NEW DELHI 03", "dob": "10/04/2003", "aadhar": "378187272334", "category": "SC", "course": "Engineering", "duration": "11 MONTHS", "center": "Lodhi Road", "email": "heena0642@gmail.com", "mobile": "7042270257", "casteCert": "-", "incomeCert": "-", "partAB": "YES", "status": "OK", "docs": []}, {"id": 24, "name": "SAKSHI SINGH", "fatherName": "MR. LAKHAN SINGH", "address": "HOUSE NO. L-1, 2573/4, SANGAM VIHAR, NEW DELHI 80", "dob": "01/03/2004", "aadhar": "647249976970", "category": "SC", "course": "Engineering", "duration": "11 MONTHS", "center": "Lodhi Road", "email": "sakshisingh2004mar@gmail.com", "mobile": "9899142948", "casteCert": "-", "incomeCert": "-", "partAB": "YES", "status": "Rejected", "docs": []}, {"id": 25, "name": "NISHI", "fatherName": "MR. MAHESH CHANDRA ARYA", "address": "D-1/32, BHARTI NAGAR, LODHI ROAD, NEW DELHI 110003", "dob": "25/10/2004", "aadhar": "993524771320", "category": "SC", "course": "Medical", "duration": "11 MONTHS", "center": "Lodhi Road", "email": "radhaarya256@gmail.com", "mobile": "8287310015", "casteCert": "-", "incomeCert": "-", "partAB": "YES", "status": "NOT OK", "docs": []}, {"id": 26, "name": "HARSH", "fatherName": "MR. MADAN SINGH", "address": "A-879, SANGAM VIHAR, NEW DELHI 80", "dob": "18/07/2004", "aadhar": "543402291068", "category": "SC", "course": "Engineering", "duration": "11 MONTHS", "center": "Lodhi Road", "email": "harsh.butolia@gmail.com", "mobile": "7011688591", "casteCert": "-", "incomeCert": "-", "partAB": "YES", "status": "OK", "docs": []}, {"id": 27, "name": "YASH", "fatherName": "MR. MADAN SINGH", "address": "A-879, SANGAM VIHAR, NEW DELHI 80", "dob": "07/12/2002", "aadhar": "397823102461", "category": "SC", "course": "Medical", "duration": "11 MONTHS", "center": "Lodhi Road", "email": "yashbutolia@gmail.com", "mobile": "8750138668", "casteCert": "-", "incomeCert": "-", "partAB": "YES", "status": "OK", "docs": []}, {"id": 28, "name": "MITHLESH KUMAR", "fatherName": "MR. SUBODH PASWAN", "address": "B-178, BLOCK B, SHIVALIK, MALVIYA NAGAR, NEW DELHI 17", "dob": "01/09/2003", "aadhar": "542484041213", "category": "SC", "course": "Medical", "duration": "11 MONTHS", "center": "Lodhi Road", "email": "mithleshkumar007a@gmail.com", "mobile": "9717941012", "casteCert": "-", "incomeCert": "-", "partAB": "YES", "status": "OK", "docs": []}, {"id": 29, "name": "DHRUV BASWAL", "fatherName": "MR. VIJAY KUMAR", "address": "H-535, DAKSHIN PURI, DR. AMBEDKAR NAGAR, NEW DELHI 62", "dob": "24/12/2003", "aadhar": "467140755474", "category": "SC", "course": "Engineering", "duration": "11 MONTHS", "center": "Lodhi Road", "email": "dhruvbaswal12@gmail.com", "mobile": "8285988865", "casteCert": "-", "incomeCert": "-", "partAB": "YES", "status": "OK", "docs": []}, {"id": 30, "name": "YASH THAGELA", "fatherName": "MR. SHER SINGH", "address": "889, SEC.-3, PUSHP VIHAR, SAKET, NEW DELHI", "dob": "21/04/2003", "aadhar": "917712380396", "category": "SC", "course": "Medical", "duration": "11 MONTHS", "center": "Lodhi Road", "email": "yashthagela03@gmail.com", "mobile": "8447162618", "casteCert": "-", "incomeCert": "-", "partAB": "YES", "status": "OK", "docs": []}, {"id": 31, "name": "ROHIT KUMAR", "fatherName": "MR. SUNIL KUMAR", "address": "G-8B,/282, RATIYA MARG, NEAR AGGARWAL SWEET GALI, SANGAM VIHAR, HAMDARD NAGAR, NEW DELHI 62", "dob": "16/07/2003", "aadhar": "482186627947", "category": "SC", "course": "Engineering", "duration": "11 MONTHS", "center": "Lodhi Road", "email": "rohitkumar36511@gmail.com", "mobile": "9910210450", "casteCert": "-", "incomeCert": "-", "partAB": "YES", "status": "OK", "docs": []}, {"id": 32, "name": "HEMANT KUMAR", "fatherName": "MR. GHANSHYAM", "address": "6/347 DAKSHINPURI", "dob": "04/06/2003", "aadhar": "209343494527", "category": "SC", "course": "Medical", "duration": "11 MONTHS", "center": "Lodhi Road", "email": "bairwahemant1@gmail.com", "mobile": "9310149286", "casteCert": "-", "incomeCert": "-", "partAB": "YES", "status": "NOT OK", "docs": []}, {"id": 33, "name": "AMAN KUMAR", "fatherName": "MR. ASHISH KUMAR", "address": "859, SUNLIGHT COLONY-2, NEW DELHI 14", "dob": "10/03/2003", "aadhar": "310298272711", "category": "SC", "course": "Engineering", "duration": "11 MONTHS", "center": "Lodhi Road", "email": "aman123pinu@gmail.com", "mobile": "9540225022", "casteCert": "-", "incomeCert": "-", "partAB": "YES", "status": "OK", "docs": []}, {"id": 34, "name": "GAURAV KUMAR", "fatherName": "SATPAL SINGH", "address": "B-1369,GALI NO.2, TINU PUBLIC SCHOOL, SANGAM VIHAR, DEOLI, SOUTH DELHI, DELHI-110062", "dob": "17/8/2003", "aadhar": "402455736981", "category": "SC", "course": "Engineering", "duration": "11 MONTHS", "center": "Lodhi Road", "email": "kumargaurav19082003@gmail.com", "mobile": "9818509394", "casteCert": "-", "incomeCert": "-", "partAB": "YES", "status": "OK", "docs": []}, {"id": 35, "name": "LAKSHAY PUSHKAR", "fatherName": "SANJAY KUMAR", "address": "D-4A, GALI NO. 20,MOLARBAND EXTN. BADARPUR,SOUTH DELHI, DELHI-110044", "dob": "03/03/2005", "aadhar": "837868303328", "category": "SC", "course": "Engineering", "duration": "11 MONTHS", "center": "Lodhi Road", "email": "lakshyapushkar27@gmail.com", "mobile": "9667288735", "casteCert": "-", "incomeCert": "-", "partAB": "NO", "status": "OK", "docs": []}, {"id": 36, "name": "KARISHMA", "fatherName": "RAMESH KUMAR REWARIA", "address": "619-20/23, DEVLI GAON, PUSHPA BHAWAN, SOUTH DELHI, DELHI-110062", "dob": "11/10/2003", "aadhar": "297289126765", "category": "SC", "course": "Medical", "duration": "11 MONTHS", "center": "Lodhi Road", "email": "162karishmarewaria@gmail.com", "mobile": "9643967222", "casteCert": "-", "incomeCert": "-", "partAB": "NO", "status": "NOT OK", "docs": []}, {"id": 37, "name": "PRATYAKSH", "fatherName": "VINOD KUMAR", "address": "C.P.O.-67, MADANGIR, DR. AMBEDKER NAGAR, SOUTH DELHI, DELHI-110062", "dob": "29/8/2003", "aadhar": "687924996014", "category": "ST", "course": "Engineering", "duration": "11 MONTHS", "center": "Lodhi Road", "email": "priyanshumeena01@gmail.com", "mobile": "9891837153", "casteCert": "-", "incomeCert": "-", "partAB": "YES", "status": "OK", "docs": []}, {"id": 38, "name": "ANNU", "fatherName": "MAHIPAL SINGH", "address": "A-168, MAVI MOHALLA, TEKHAND, OKHLA PHASE-I SOUTH DELHI 20", "dob": "14/11/2003", "aadhar": "552211916071", "category": "SC", "course": "Engineering", "duration": "11 MONTHS", "center": "Lodhi Road", "email": "annu96204@gmail.com", "mobile": "7683061242", "casteCert": "-", "incomeCert": "-", "partAB": "YES", "status": "OK", "docs": []}, {"id": 39, "name": "SHRAWAN KUMAR", "fatherName": "KASTOOR CHAND", "address": "H.NO.20/46, JJ COLONY, DAKSHIN PURI EXTN.PUSHPA BHAWAN, SOUTH DELHI-110062", "dob": "14/7/2003", "aadhar": "580298743641", "category": "SC", "course": "Engineering", "duration": "11 MONTHS", "center": "Lodhi Road", "email": "shrawanmahawar9650@gmail.com", "mobile": "7827227609", "casteCert": "-", "incomeCert": "-", "partAB": "YES", "status": "NOT OK", "docs": []}, {"id": 40, "name": "RASHMIKA BAIRVA", "fatherName": "RAKESH BAIRVA", "address": "S-134/246, HARIJAN CAMP, NEAR MEHAR CHAND MARKET, LODHI COLONY, NEW DELHI-110003", "dob": "21/8/2004", "aadhar": "789139708439", "category": "SC", "course": "Medical", "duration": "11 MONTHS", "center": "Lodhi Road", "email": "laxmancafe@gmail.com", "mobile": "9868661321 7982455321", "casteCert": "Not found on portal", "incomeCert": "YES", "partAB": "YES", "status": "OK", "docs": []}, {"id": 41, "name": "VIKAS", "fatherName": "SURAJ KUMAR", "address": "A-33, DEVLI EXT. SOUTH DELHI, DELHI-110062", "dob": "16/3/2003", "aadhar": "498426639908", "category": "SC", "course": "Medical", "duration": "11 MONTHS", "center": "Lodhi Road", "email": "vikaskumar@gmail.com", "mobile": "9958793221", "casteCert": "-", "incomeCert": "-", "partAB": "YES", "status": "OK", "docs": []}, {"id": 42, "name": "GUDIYA", "fatherName": "RAJ KUMAR", "address": "H.NO-890, GALI NO.-21, I-2BLOCK, SANGAM VIHAR, NEW DELHI-110080", "dob": "21/11/2002", "aadhar": "658789122340", "category": "SC", "course": "Medical", "duration": "11 MONTHS", "center": "Lodhi Road", "email": "guudi3975775@gmail.com", "mobile": "8447395775 9818395775", "casteCert": "-", "incomeCert": "-", "partAB": "YES", "status": "Rejected", "docs": []}, {"id": 43, "name": "KRITIGYA NIRMAL", "fatherName": "DESHRAJ NIRMAL", "address": "H.NO.54, KILOKARI VILLAGE, ASHRAM, SOUTH DELHI, DELHI-110014", "dob": "01/11/2004", "aadhar": "546688852205", "category": "SC", "course": "Engineering", "duration": "11 MONTHS", "center": "Lodhi Road", "email": "kritagyanirmal23737@gmail.com", "mobile": "9717698978 8800280178", "casteCert": "-", "incomeCert": "-", "partAB": "NO", "status": "OK", "docs": []}, {"id": 44, "name": "ABHAY PRASAD", "fatherName": "KANHAIYA PRASAD", "address": "H.NO.36, BHATI KHURD, FATEHPUR BERI, NEW DELHI-110074", "dob": "06/11/2004", "aadhar": "709853567989", "category": "SC", "course": "ENGINEERING", "duration": "11 MONTHS", "center": "Lodhi Road", "email": "abhayprasad.live@gmail.com", "mobile": "8010089662", "casteCert": "-", "incomeCert": "-", "partAB": "YES", "status": "OK", "docs": []}, {"id": 45, "name": "AARTI", "fatherName": "KAILASH CHAND", "address": "J-1/735, GALI NO.12, SANGAM VIHAR, NEW DELHI-110080", "dob": "16/1/2003", "aadhar": "455671675314", "category": "SC", "course": "Medical", "duration": "11 MONTHS", "center": "Lodhi Road", "email": "aaru90500@gmail.com", "mobile": "9873529960", "casteCert": "-", "incomeCert": "-", "partAB": "YES", "status": "Rejected", "docs": []}, {"id": 46, "name": "AKSHAY KUMAR", "fatherName": "ABHINANDAN KUMAR", "address": "P-39 PILLANI VILLAGE , SAROJINI NAGAR-110023", "dob": "20-03-2004", "aadhar": "788158973944", "category": "OBC", "course": "Medical", "duration": "11 MONTHS", "center": "Lodhi Road", "email": "akshayyy991178@gmail.com", "mobile": "9911787306 , '9773650515", "casteCert": "-", "incomeCert": "-", "partAB": "YES", "status": "OK", "docs": []}, {"id": 47, "name": "ABHISHEK YADAV", "fatherName": "SURAJ PAL SINGH", "address": "307, JOOD BAGH KOTLA MUBARAKPUR, DELHI 03", "dob": "26-06-2004", "aadhar": "514667748378", "category": "OBC", "course": "Engineering", "duration": "11 MONTHS", "center": "Lodhi Road", "email": "abhishekyadavuniceF@gmail.com", "mobile": "8851724652", "casteCert": "-", "incomeCert": "-", "partAB": "NO", "status": "OK", "docs": []}, {"id": 48, "name": "MUSKAN MOURYA", "fatherName": "SURESH KUMAR MOURYA", "address": "H-NO 148 BABU LAL CHOWK, MUNIRKA, SOUTH WEST DELHI- 110067", "dob": "15-02-2004", "aadhar": "793601130794", "category": "OBC", "course": "Engineering", "duration": "11 MONTHS", "center": "Lodhi Road", "email": "vimlamaurya168@gmail.com", "mobile": "9999895528", "casteCert": "-", "incomeCert": "-", "partAB": "YES", "status": "Rejected", "docs": []}, {"id": 49, "name": "ASHISH KUMAR KUHWAHA", "fatherName": "CHANDRIKA PRASAD", "address": "H.NO-188,D-7, CHHATARPUR PAHARI, CHHATARPUR SOUTH DELHI - 110074", "dob": "06-09-2002", "aadhar": "446035550184", "category": "OBC", "course": "Medical", "duration": "11 MONTHS", "center": "Lodhi Road", "email": "ashishkushwaha87000@gmail.com", "mobile": "8700058659", "casteCert": "-", "incomeCert": "-", "partAB": "YES", "status": "OK", "docs": []}, {"id": 50, "name": "SAMEER SIDDIKI", "fatherName": "NAWABUDDIN", "address": "D-389 NAVJEEVAN CAMP, KALKAJI NEW DELHI-19", "dob": "17-06-2004", "aadhar": "486659135791", "category": "OBC", "course": "Medical", "duration": "11 MONTHS", "center": "Lodhi Road", "email": "ssiddiqui46786@gmail.com", "mobile": "8595791101", "casteCert": "-", "incomeCert": "-", "partAB": "YES", "status": "NOT OK", "docs": []}, {"id": 51, "name": "SNEHA", "fatherName": "LATE SHAILENDRA PRASAD", "address": "H.NO.210, SECTOR- 2 TYPE- 1  SADIQ NAGAR NEW DELHI -110049", "dob": "13-06-2004", "aadhar": "208181162254", "category": "OBC", "course": "Engineering", "duration": "11 MONTHS", "center": "Lodhi Road", "email": "sneha130604@gmail.com", "mobile": "8826918879", "casteCert": "EWS  Certificate not verify from Revenue portal", "incomeCert": "", "partAB": "YES", "status": "NOT OK", "docs": []}, {"id": 52, "name": "ABHISHEK VERMA", "fatherName": "RAJ KUMAR VERMA", "address": "G-599, SANGAM VIHAR NEW DELHI-110080", "dob": "24-01-2004", "aadhar": "731037002201", "category": "OBC", "course": "Medical", "duration": "11 MONTHS", "center": "Lodhi Road", "email": "rajkumarg599@gmail.com", "mobile": "8010440118, '9971264970", "casteCert": "-", "incomeCert": "-", "partAB": "YES", "status": "OK", "docs": []}, {"id": 53, "name": "GANGA BASISTA", "fatherName": "ANIL KUMAR BASISTA", "address": "17, SARAI KALE KHAN, HAZRAT NIZAMUDDIN, SOUTH DELHI - 110013", "dob": "15-10-2002", "aadhar": "928084485219", "category": "OBC", "course": "Medical", "duration": "11 MONTHS", "center": "Lodhi Road", "email": "gangabasista@gmail.com", "mobile": "9250412308", "casteCert": "-", "incomeCert": "-", "partAB": "YES", "status": "NOT OK", "docs": []}, {"id": 54, "name": "PIYUSH CHAURASIYA", "fatherName": "JITENDRA KUMAR CHAURASIYA", "address": "161, VASANT GAON, NEW DELHI - 110057", "dob": "06-01-2004", "aadhar": "386829656349", "category": "OBC", "course": "Medical", "duration": "11 MONTHS", "center": "Lodhi Road", "email": "piyushc051@gmail.com", "mobile": "9582782211", "casteCert": "-", "incomeCert": "-", "partAB": "YES", "status": "OK", "docs": []}, {"id": 55, "name": "MD.MUMTAZ ALI", "fatherName": "MOHD. MUSTAKEEN", "address": "359/1-C, SUBHASH MARKET, PUNJABI BAZAR,KOTLA MUBARAKPUR, LODHI ROAD, DELHI-110003", "dob": "07-11-2005", "aadhar": "203209877285", "category": "OBC", "course": "Medical", "duration": "11 MONTHS", "center": "Lodhi Road", "email": "mumtazmohd906@gmail.com", "mobile": "7011081566, '8826287168", "casteCert": "Not found on portal", "incomeCert": "YES", "partAB": "YES", "status": "OK", "docs": []}, {"id": 56, "name": "GULABSHAH KHATOON", "fatherName": "MOHD.MUSTAFA", "address": "RZ-7 CHANDAN COLONY SAIDULAJAB , DELHI - 30", "dob": "02-04-2002", "aadhar": "974597174285", "category": "OBC", "course": "Engineering", "duration": "11 MONTHS", "center": "Lodhi Road", "email": "gulabshah242002@gmail.com", "mobile": "8882246428", "casteCert": "-", "incomeCert": "-", "partAB": "NO", "status": "NOT OK", "docs": []}, {"id": 57, "name": "MUKUL", "fatherName": "VINOD KUMAR", "address": "37, BAIRAGI MOHALLA, NEAR PRIMARY SCHOOL JONAPUR, SOUTH DELHI - 110047", "dob": "10-01-2004", "aadhar": "639231275857", "category": "OBC", "course": "Medical", "duration": "11 MONTHS", "center": "Lodhi Road", "email": "mukulagrawat@gmail.com", "mobile": "9354564316, '9811868316", "casteCert": "-", "incomeCert": "-", "partAB": "YES", "status": "OK", "docs": []}, {"id": 58, "name": "VIDUSHI YADAV", "fatherName": "RAJESH YADAV", "address": "116-BHOGAL ROAD, SOUTH DELHI - 110014", "dob": "21-01-2005", "aadhar": "515482324597", "category": "OBC", "course": "Medical", "duration": "11 MONTHS", "center": "Lodhi Road", "email": "vidushiyadav44@gmail.com", "mobile": "7291904090", "casteCert": "-", "incomeCert": "-", "partAB": "NO", "status": "OK", "docs": []}, {"id": 59, "name": "PRINCE THAKUR", "fatherName": "MAHESH KUMAR", "address": "HOUSE NO- A-203, SANJAY COLONY,0, BHATTI MINES NEW DELHI- CHATTARPUR-NEW DELHI - 110074", "dob": "16-04-2004", "aadhar": "588615715979", "category": "OBC", "course": "Medical", "duration": "11 MONTHS", "center": "Lodhi Road", "email": "pt1028436@gmail.com", "mobile": "9868928238", "casteCert": "-", "incomeCert": "-", "partAB": "YES", "status": "OK", "docs": []}, {"id": 60, "name": "JATIN KUMAR", "fatherName": "RAJ KUMAR", "address": "375 MASJD MOTH SOUTH EXTENTION PART II, NEW DELHI - 49", "dob": "05-06-2004", "aadhar": "675231450376", "category": "OBC", "course": "Engineering", "duration": "11 MONTHS", "center": "Lodhi Road", "email": "rk_+E77mail2005@yahoo.co.in", "mobile": "9871210945, '8527615214", "casteCert": "-", "incomeCert": "-", "partAB": "YES", "status": "OK", "docs": []}, {"id": 61, "name": "HITESH YADAV", "fatherName": "SANJAY KUMAR YADAV", "address": "G-9 BLOCK G POLICE STAFF QTRS LODHI COLONY DELHI - 110003", "dob": "03-11-2004", "aadhar": "632810239243", "category": "OBC", "course": "Engineering", "duration": "11 MONTHS", "center": "Lodhi Road", "email": "thecoolbuddy2004@gmail.com", "mobile": "8700385190", "casteCert": "-", "incomeCert": "-", "partAB": "YES", "status": "NOT OK", "docs": []}, {"id": 62, "name": "LOVE KUMAR BASISTA", "fatherName": "ANIL KUMAR BASISTA", "address": "17, SARAI KALE KHAN, HAZRAT NIZAMUDDIN, SOUTH DELHI - 110013", "dob": "28-10-2004", "aadhar": "526875033739", "category": "OBC", "course": "Engineering", "duration": "11 MONTHS", "center": "Lodhi Road", "email": "luvgujjar2810@gmail.com", "mobile": "9870123087", "casteCert": "-", "incomeCert": "-", "partAB": "YES", "status": "NOT OK", "docs": []}, {"id": 63, "name": "MAHIMA VERMA", "fatherName": "DINESH VERMA", "address": "F-3/474K/STREET NO.4 A SANGAM VIHAR, NEW DELHI - 110080", "dob": "23-06-2004", "aadhar": "446393038971", "category": "OBC", "course": "Medical", "duration": "11 MONTHS", "center": "Lodhi Road", "email": "mahimav889@gmail.com", "mobile": "9958218797", "casteCert": "-", "incomeCert": "-", "partAB": "YES", "status": "OK", "docs": []}, {"id": 64, "name": "SURYAKANT SINGH", "fatherName": "RAM BHOOL SINGH", "address": "B-510, GALI NO. 5 CHATTARPUR HILLS , NEW DELHI - 110074", "dob": "04-11-2003", "aadhar": "419725997707", "category": "OBC", "course": "Engineering", "duration": "11 MONTHS", "center": "Lodhi Road", "email": "srambhool@gmail.com", "mobile": "7701904541, 9650647879", "casteCert": "-", "incomeCert": "-", "partAB": "YES", "status": "OK", "docs": []}, {"id": 65, "name": "PRIYA THAKUR", "fatherName": "MAHESH KUMAR", "address": "444-DEVLI VILLAGE NEW DELHI - 110062", "dob": "22-11-2000", "aadhar": "394207366857", "category": "OBC", "course": "Medical", "duration": "11 MONTHS", "center": "Lodhi Road", "email": "priyathakur212121@gmail.com", "mobile": "9013331488", "casteCert": "-", "incomeCert": "-", "partAB": "YES", "status": "OK", "docs": []}, {"id": 66, "name": "ANUJ KUMAR SINGH", "fatherName": "RAM KUMAR SINGH", "address": "F-106, TYPE - II NEW DELHI- MOTI BAGH - 1 SOUTH WEST DELHI, DELHI 21", "dob": "02-05-2003", "aadhar": "931537205258", "category": "OBC", "course": "Engineering", "duration": "11 MONTHS", "center": "Lodhi Road", "email": "kumarsinghram76@gmail.com", "mobile": "9868941419", "casteCert": "-", "incomeCert": "-", "partAB": "YES", "status": "OK", "docs": []}, {"id": 67, "name": "SNEHA GUPTA", "fatherName": "SUNIL KUMAR", "address": "1330, STREET NO.8 GOVINDPURI KALKAJI , DELHI - 110019", "dob": "20-03-2003", "aadhar": "968631158856", "category": "OBC", "course": "Engineering", "duration": "11 MONTHS", "center": "Lodhi Road", "email": "snehag200303@gmail.com", "mobile": "9818950971", "casteCert": "-", "incomeCert": "-", "partAB": "YES", "status": "NOT OK", "docs": []}, {"id": 68, "name": "RAMVILAS PRAJAPATI", "fatherName": "KANHAIYALAL PRAJAPATI", "address": "L-IST 14/797 SANGAM VIHAR NEW DELHI - 110062", "dob": "11-10-2001", "aadhar": "574323702759", "category": "OBC", "course": "Medical", "duration": "11 MONTHS", "center": "Lodhi Road", "email": "srp7011@gmail.com", "mobile": "7011249274", "casteCert": "-", "incomeCert": "-", "partAB": "YES", "status": "OK", "docs": []}, {"id": 69, "name": "SATYAM KUMAR", "fatherName": "MR. VINOD KUMAR", "address": "1625-A, GALI 29/9, BLOCK L1, SANGAM VIHAR, NEW DELHI 62", "dob": "03/06/2003", "aadhar": "806249033598", "category": "OBC", "course": "Engineering", "duration": "11 MONTHS", "center": "Lodhi Road", "email": "satyamkr9818@gmail.com", "mobile": "9625268280", "casteCert": "-", "incomeCert": "-", "partAB": "YES", "status": "NOT OK", "docs": []}, {"id": 70, "name": "ASHISH KUMAR", "fatherName": "MR. GAUTAM PRASAD SINGH", "address": "H. NO. 2056/7, BLOCK, L1, SANGAM VIHAR, NEW DELHI 62", "dob": "29/11/2003", "aadhar": "382720949581", "category": "OBC", "course": "Engineering", "duration": "11 MONTHS", "center": "Lodhi Road", "email": "ashishkr8802@gmail.com", "mobile": "8920143166", "casteCert": "-", "incomeCert": "-", "partAB": "YES", "status": "NOT OK", "docs": []}, {"id": 71, "name": "GAURAV KUMAR", "fatherName": "MR. DAYANAND KUMAR", "address": "427, KHATI MOHALLA, KAPASHERA, DELHI 37", "dob": "21/05/2002", "aadhar": "250029949136", "category": "OBC", "course": "Engineering", "duration": "11 MONTHS", "center": "Lodhi Road", "email": "vickyvermajiiii@gmail.com", "mobile": "8742966483", "casteCert": "-", "incomeCert": "-", "partAB": "NO", "status": "NOT OK", "docs": []}, {"id": 72, "name": "PRADEEP", "fatherName": "MR. NANKU CHAUHAN", "address": "BLOCK L1, STREET NO. 13, HOUSE NO. 776, BUDH BAZAR, SANGAM VIHAR, NEW DELHI", "dob": "03/12/2002", "aadhar": "634431856335", "category": "OBC", "course": "Medical", "duration": "11 MONTHS", "center": "Lodhi Road", "email": "oksingh2091157@gmail.com", "mobile": "7827800692", "casteCert": "-", "incomeCert": "-", "partAB": "YES", "status": "OK", "docs": []}, {"id": 73, "name": "YASH SHARMA", "fatherName": "MR. MAHESH SHARMA", "address": "D-38 STREET NO 08 PANCHAL VIHAR ,SHIV VIHAR KARAWALNAGAR NORTH EAST DELHI ,DELHI 94", "dob": "31/03/2000", "aadhar": "314712981747", "category": "OBC", "course": "Medical", "duration": "11 MONTHS", "center": "Lodhi Road", "email": "yashsharma96450@gmail.com", "mobile": "8076022148", "casteCert": "-", "incomeCert": "-", "partAB": "YES", "status": "OK", "docs": []}, {"id": 74, "name": "KASHISH NAGAR", "fatherName": "MR. MANVIR KUMAR", "address": "I-53, HARKESH NAGAR, OKHLA, PHASE 2, OKHLA INDUSTRIAL AREA, NEW DELHI 20", "dob": "22/10/2004", "aadhar": "645681977876", "category": "OBC", "course": "Medical", "duration": "11 MONTHS", "center": "Lodhi Road", "email": "kashishnagar001@gmail.com", "mobile": "9871611815", "casteCert": "-", "incomeCert": "-", "partAB": "YES", "status": "OK", "docs": []}, {"id": 75, "name": "RAKSHA DEVI", "fatherName": "MR. AKHILESH KUMAR", "address": "TOWER 4, A-4, NEW MOTI BAGH, NEW DELHI", "dob": "20/01/2004", "aadhar": "380789947556", "category": "OBC", "course": "Medical", "duration": "11 MONTHS", "center": "Lodhi Road", "email": "raksha858684@gmail.com", "mobile": "8586840685", "casteCert": "-", "incomeCert": "-", "partAB": "YES", "status": "OK", "docs": []}, {"id": 76, "name": "ANKIT YADAV", "fatherName": "MR. SHYAM YADAV", "address": "176-D/2, PRAJAPAT NAGAR, GAUTAM NAGAR, NEW DELHI 49", "dob": "18/09/2005", "aadhar": "668281183610", "category": "OBC", "course": "Engineering", "duration": "11 MONTHS", "center": "Lodhi Road", "email": "rajeshrock082@gmail.com", "mobile": "8527780104", "casteCert": "-", "incomeCert": "-", "partAB": "YES", "status": "OK", "docs": []}, {"id": 77, "name": "PRACHI KUMARI", "fatherName": "MR. RAJ KUMAR", "address": "F-293, HARSH NAGAR, HARI NAGAR PART - 3 JAITPUR NEW DELHI - 110044", "dob": "21/12/2004", "aadhar": "830803647136", "category": "OBC", "course": "Engineering", "duration": "11 MONTHS", "center": "Lodhi Road", "email": "rajmanoj365@gmail.com", "mobile": "9810915243", "casteCert": "-", "incomeCert": "-", "partAB": "YES", "status": "NOT OK", "docs": []}, {"id": 78, "name": "ABDUL AJIJE SHEKH", "fatherName": "GOLAM MOSTAFA SHEKH", "address": "216 SHAHPURJAT, NEW DELHI - 110049", "dob": "14/04/2002", "aadhar": "743259762917", "category": "OBC", "course": "Medical", "duration": "11 MONTHS", "center": "Lodhi Road", "email": "Rohit.14yoyo@gmail.com", "mobile": "7217730944 9315283448", "casteCert": "-", "incomeCert": "-", "partAB": "NO", "status": "NOT OK", "docs": []}, {"id": 79, "name": "HIMANSHU", "fatherName": "BHIKAM SINGH", "address": "LAKHAPAT COLONY PART 2, GALI NO. 18, H.NO. 846, NEW DELHI 44", "dob": "08/01/2004", "aadhar": "863164073602", "category": "OBC", "course": "Medical", "duration": "11 MONTHS", "center": "Lodhi Road", "email": "ht8593483@gmail.com", "mobile": "8860278896", "casteCert": "-", "incomeCert": "-", "partAB": "YES", "status": "OK", "docs": []}, {"id": 80, "name": "MOHD ARSH MALIK", "fatherName": "SHAMSHAD MALIK", "address": "H.NO. 4928 A/27 B, GALI NO. 4,EAST OLD SEELAMPUR,GANDHI NAGAR,EAST DELHI,DELHI-110031", "dob": "27/9/2004", "aadhar": "212332087229", "category": "OBC", "course": "Medical", "duration": "11 MONTHS", "center": "Lodhi Road", "email": "arshmalik1727@gmail.com", "mobile": "9313495472", "casteCert": "-", "incomeCert": "-", "partAB": "YES", "status": "NOT OK", "docs": []}, {"id": 81, "name": "KASHISH", "fatherName": "MOHAMMAD SALEEM", "address": "F 147, 3RD FLOOR SHAHEEN BAGH A.F.E PART-2ND JAMIA NAGAR, NEW DELHI-110025", "dob": "27/10/2003", "aadhar": "811101378608", "category": "OBC", "course": "Medical", "duration": "11 MONTHS", "center": "Lodhi Road", "email": "tomohdsaleem@gmail.com", "mobile": "7048963244, 9899470786", "casteCert": "-", "incomeCert": "-", "partAB": "YES", "status": "OK", "docs": []}, {"id": 82, "name": "MOHAN ADNAAN", "fatherName": "MOHD SALEEM", "address": "H.NO. C-85, GALI NO. 18-D, MOLARBAND EXT BADARPUR JAITPUR SOUTH DELHI, DELHI-110044", "dob": "14/3/2004", "aadhar": "231710168382", "category": "OBC", "course": "Medical", "duration": "11 MONTHS", "center": "Lodhi Road", "email": "mohdadnaan548@gmail.com", "mobile": "8448366986", "casteCert": "-", "incomeCert": "-", "partAB": "YES", "status": "NOT OK", "docs": []}, {"id": 83, "name": "NANCY BAISOYA", "fatherName": "DEVENDIR KUMAR", "address": "H.NO.496, KHAIRPUR VILLAGE, KOTLA MUBARAKPUR, NEW DELHI-110003", "dob": "22/01/2003", "aadhar": "793335550492", "category": "OBC", "course": "Medical", "duration": "11 MONTHS", "center": "Lodhi Road", "email": "nbaisoya22@gmail.com", "mobile": "8375880948", "casteCert": "-", "incomeCert": "-", "partAB": "YES", "status": "OK", "docs": []}, {"id": 84, "name": "VAIBHAV", "fatherName": "RAVI PARKASH", "address": "H.NO.E-68, GROUND FLOOR, KHASRA NO.232, AYA NAGAR EXT, SOUTH DELHI, DELHI-110047", "dob": "07/03/2004", "aadhar": "488446914118", "category": "OBC", "course": "Medical", "duration": "11 MONTHS", "center": "Lodhi Road", "email": "chanchalverma92114@gmail.com", "mobile": "9211422958", "casteCert": "-", "incomeCert": "-", "partAB": "YES", "status": "OK", "docs": []}, {"id": 85, "name": "MEHUL KUMAR", "fatherName": "SURINDRA KUMAR", "address": "S-53, GREATER KAILASH-1,NEW DELHI-110048", "dob": "03/12/2004", "aadhar": "731908421999", "category": "OBC", "course": "Medical", "duration": "11 MONTHS", "center": "Lodhi Road", "email": "surindra.k@gmail.com", "mobile": "9013804300", "casteCert": "-", "incomeCert": "-", "partAB": "YES", "status": "OK", "docs": []}, {"id": 86, "name": "SANDEEP YADAV", "fatherName": "TILAK YADAV", "address": "1ST PUSTA,A BLOCK, PART-2,GALI NO. 12, HOUSE NO. 519, SONIA VIHAR,DELHI-110094", "dob": "31/03/2002", "aadhar": "874518533427", "category": "OBC", "course": "Engineering", "duration": "11 MONTHS", "center": "Lodhi Road", "email": "sandy0747yadav@gmail.com", "mobile": "9810648991", "casteCert": "-", "incomeCert": "-", "partAB": "YES", "status": "OK", "docs": []}, {"id": 87, "name": "ANKUSH KUMAR", "fatherName": "BHUVANENDRA PRASAD", "address": "M-II, C-34A, GALI NO. 3, SHIV MANDIR SANGAM VIHAR, MEHRAULI, SOUTH DELHI, DELHI-110062", "dob": "18/9/2003", "aadhar": "503199421314", "category": "OBC", "course": "Engineering", "duration": "11 MONTHS", "center": "Lodhi Road", "email": "learnerak18@gmail.com", "mobile": "9958110402", "casteCert": "-", "incomeCert": "-", "partAB": "YES", "status": "NOT OK", "docs": []}, {"id": 88, "name": "MANISH VERMA", "fatherName": "JAY SINGH", "address": "L-1ST-238, GALI NO. 5, SANGAM VIHAR, DEOLI, DELHI 62", "dob": "11/12/2002", "aadhar": "801384482804", "category": "OBC", "course": "Engineering", "duration": "11 MONTHS", "center": "Lodhi Road", "email": "mankknish@gmail.com", "mobile": "8595250968", "casteCert": "-", "incomeCert": "-", "partAB": "YES", "status": "NOT OK", "docs": []}, {"id": 89, "name": "POONAM", "fatherName": "RAGHUBIR SINGH", "address": "F-3/108/1, SANGAM VIHAR,DEOLI,SOUTH DELHI,NEW DELHI-110062", "dob": "07/07/2003", "aadhar": "714576573141", "category": "OBC", "course": "Engineering", "duration": "11 MONTHS", "center": "Lodhi Road", "email": "princekumarbhgel@gmail.com", "mobile": "9560602163", "casteCert": "-", "incomeCert": "-", "partAB": "YES", "status": "OK", "docs": []}, {"id": 90, "name": "AAMIR KHAN", "fatherName": "MOHD RAFI", "address": "T-103A, NEAR NAFISA MASIJID, SARAI KALE KHAN, NEW DELHI 13", "dob": "06/05/2003", "aadhar": "248072710377", "category": "OBC", "course": "Engineering", "duration": "11 MONTHS", "center": "Lodhi Road", "email": "aamirkhandps1@gmail.com", "mobile": "9990350367", "casteCert": "-", "incomeCert": "-", "partAB": "YES", "status": "OK", "docs": []}, {"id": 91, "name": "VIVEK SINGH YADAV", "fatherName": "DEEWAN SINGH YADAV", "address": "H.NO.E-52, GALI NO.3, MOHAN BABA NAGAR TAJPUR, BADARPUR, SOUTH DELHI-110044", "dob": "21/02/2002", "aadhar": "335060632836", "category": "OBC", "course": "Medical", "duration": "11 MONTHS", "center": "Lodhi Road", "email": "viveksingh6815@gmail.com", "mobile": "9599318929", "casteCert": "Not found on portal", "incomeCert": "YES", "partAB": "YES", "status": "OK", "docs": []}, {"id": 92, "name": "RIYA", "fatherName": "SANJEEV KUMAR", "address": "RZ/F-203, GALI NO.20, PALAM, SADH NAGAR, II, NEW DELHI-110045", "dob": "11/03/2003", "aadhar": "643718384848", "category": "OBC", "course": "MEDICAL", "duration": "11 MONTHS", "center": "Lodhi Road", "email": "riyaaash15@gmail.com", "mobile": "9311332538", "casteCert": "-", "incomeCert": "-", "partAB": "YES", "status": "OK", "docs": []}, {"id": 93, "name": "GUNJAN KUMARI", "fatherName": "VINAY KUMAR", "address": "RZF-6/24, GALI NO.23A, SADH NAGAR, 2 PALAM COLONY, NEW DELHI-110045", "dob": "02/09/2003", "aadhar": "978379824787", "category": "OBC", "course": "MEDICAL", "duration": "11 MONTHS", "center": "Lodhi Road", "email": "kumarigunjan9968@gmail.com", "mobile": "9818051065", "casteCert": "-", "incomeCert": "-", "partAB": "YES", "status": "OK", "docs": []}, {"id": 94, "name": "AJAY KUMAR", "fatherName": "PARASRAM", "address": "H.NO.370-E, CHIRAG DELHI, MALVIYA NAGAR, SOUTH DELHI-110017", "dob": "10/01/2004", "aadhar": "860918631376", "category": "OBC", "course": "Engineering", "duration": "11 MONTHS", "center": "Lodhi Road", "email": "ajaykumar217837@gmail.com", "mobile": "8920641610", "casteCert": "-", "incomeCert": "-", "partAB": "YES", "status": "OK", "docs": []}, {"id": 95, "name": "MUSKAN SHARMA", "fatherName": "RAKESH SHARMA", "address": "152, ALIGANJ, KOTLA MUBARAKPUR, NEW DELHI 03", "dob": "17/08/2003", "aadhar": "722660485089", "category": "OBC", "course": "Medical", "duration": "11 MONTHS", "center": "Lodhi Road", "email": "2003muskansharma@gmail.com", "mobile": "8860289794", "casteCert": "-", "incomeCert": "-", "partAB": "YES", "status": "Rejected", "docs": []}, {"id": 96, "name": "SOHEL", "fatherName": "MOHD ISHTKHAR", "address": "H.NO. 86-A/10, SARAI KALE KHAN, NEAR ISBT", "dob": "20/04/2003", "aadhar": "586829947706", "category": "OBC", "course": "Medical", "duration": "11 MONTHS", "center": "Lodhi Road", "email": "sohel981839@gmail.com", "mobile": "9810506372", "casteCert": "-", "incomeCert": "-", "partAB": "YES", "status": "OK", "docs": []}, {"id": 97, "name": "SANDHYA PAL", "fatherName": "DHARMENDRA KUMAR PAL", "address": "C-4/5, GALI NO. 14, 2ND PUSTA, SONIA VIHAR, DELHI-110094", "dob": "12/12/2002", "aadhar": "415898849688", "category": "OBC", "course": "Medical", "duration": "11 MONTHS", "center": "Lodhi Road", "email": "palsandhya2002@gmail.com", "mobile": "8076259707", "casteCert": "-", "incomeCert": "-", "partAB": "YES", "status": "OK", "docs": []}, {"id": 98, "name": "FUJAIL AKRAM", "fatherName": "SARAJUL ANSARI", "address": "1818,UDAY CHAND MARG, KOTLA MUBARAKPUR, LODHI ROAD, CENTRAL DELHI-110003", "dob": "05/07/2003", "aadhar": "966093137929", "category": "OBC", "course": "Medical", "duration": "11 MONTHS", "center": "Lodhi Road", "email": "fujail5july@gmail.com", "mobile": "9643912943", "casteCert": "-", "incomeCert": "-", "partAB": "YES", "status": "OK", "docs": []}, {"id": 99, "name": "AMIT KUMAR YADAV", "fatherName": "KAMLESH KUMAR YADAV", "address": "B-400, MOTI BAGH, NEW DELHI-110021", "dob": "27/06/2003", "aadhar": "324879036896", "category": "OBC", "course": "ENGINEERING", "duration": "11 MONTHS", "center": "Lodhi Road", "email": "yadavkumaramit2323@gmail.com", "mobile": "8766263912", "casteCert": "-", "incomeCert": "-", "partAB": "YES", "status": "OK", "docs": []}, {"id": 100, "name": "DEEPAK YADAV", "fatherName": "MUNIM SINGH", "address": "HO.NO. 348, GALI NO 4 RAJOKARI SOUTH WEST DELHI , DELHI-110038", "dob": "23/11/2003", "aadhar": "783358923151", "category": "OBC", "course": "Engineering", "duration": "11 MONTHS", "center": "Lodhi Road", "email": "deepakyadav9911072814@gmail.com", "mobile": "9911072814", "casteCert": "-", "incomeCert": "-", "partAB": "YES", "status": "OK", "docs": []}, {"id": 101, "name": "SAI ISHAM YADAV", "fatherName": "KISHORE KUMAR YADAV", "address": "832- GAUTAMPURI PHASE 1 BADARPUR  DELHI 110044", "dob": "09/09/2004", "aadhar": "980846835726", "category": "OBC", "course": "Engineering", "duration": "11 MONTHS", "center": "Lodhi Road", "email": "saiishamyadav@gmail.com", "mobile": "9871425422", "casteCert": "-", "incomeCert": "-", "partAB": "NO", "status": "OK", "docs": []}, {"id": 102, "name": "PRACHI GUPTA", "fatherName": "PRAMENDRA KUMAR", "address": "HO. NO. 107/C BLOCK -H HARKESH NAGAR OKHLA  PHASE -2 CRRI OKHLA INDUSTRIAL ESTATE, SOUTH DELHI , DELHI -110020", "dob": "24/09/2004", "aadhar": "255289953689", "category": "OBC", "course": "MEDICAL", "duration": "11 MONTHS", "center": "Lodhi Road", "email": "prachig29242@gmail.com", "mobile": "9810198126", "casteCert": "-", "incomeCert": "-", "partAB": "YES", "status": "OK", "docs": []}, {"id": 103, "name": "SHWETA", "fatherName": "INDERJEET SINGH", "address": "282, MAWASI COLONY, MADANPUR KHADAR NEAR JANTA FLATS, NEW DELHI 76", "dob": "15/11/2004", "aadhar": "563303597823", "category": "EWS", "course": "Medical", "duration": "11 MONTHS", "center": "Lodhi Road", "email": "shwetapatil5116@gmail.com", "mobile": "9958460394, 7011376917", "casteCert": "EWS  Certificate not verify from Revenue portal", "incomeCert": "", "partAB": "YES", "status": "OK", "docs": []}, {"id": 104, "name": "PRACHI GUPTA", "fatherName": "MAHIPAL GUPTA", "address": "9/229, DAKSHIN PURI,AMBEDKAR NAGAR  NEW DELHI 62", "dob": "16/12/2003", "aadhar": "392005755304", "category": "EWS", "course": "Medical", "duration": "11 MONTHS", "center": "Lodhi Road", "email": "prxchi16@gmail.com", "mobile": "9213696371, 011-26053371", "casteCert": "-", "incomeCert": "-", "partAB": "YES", "status": "Rejected", "docs": []}, {"id": 105, "name": "SONALI SINGH", "fatherName": "SHIV MANGAL SINGH", "address": "132A, 2ND FLOOR, 29, ARJUN NAGAR, SAFDERJUNG ENCLAVE, NEW DELHI 29", "dob": "01/10/1998", "aadhar": "832569172511", "category": "EWS", "course": "Medical", "duration": "11 MONTHS", "center": "Lodhi Road", "email": "sonalisingh8686@gmail.com", "mobile": "9560637451", "casteCert": "-", "incomeCert": "-", "partAB": "YES", "status": "NOT OK", "docs": []}, {"id": 106, "name": "BHAWANI KUMARI", "fatherName": "SANJAY KUMAR", "address": "66A/2, PRATEEK MARKET, MUNIRKA, NEW DELHI 67", "dob": "21/10/2004", "aadhar": "793948249240", "category": "EWS", "course": "Medical", "duration": "11 MONTHS", "center": "Lodhi Road", "email": "sanjaykumar101119979@gmail.com", "mobile": "7827915956", "casteCert": "EWS  Certificate not verify from Revenue portal", "incomeCert": "", "partAB": "YES", "status": "OK", "docs": []}, {"id": 107, "name": "SHUBHAM KUMAR", "fatherName": "SANJEEV KUMAR SHARMA", "address": "H. NO. 155, TYAGI MOHALLA, CHATTARPUR, NEW DELHI 74", "dob": "02/02/2004", "aadhar": "928961501397", "category": "EWS", "course": "Engineering", "duration": "11 MONTHS", "center": "Lodhi Road", "email": "shubhamncc123@gmail.com", "mobile": "9667065503", "casteCert": "EWS  Certificate not verify from Revenue portal", "incomeCert": "", "partAB": "YES", "status": "OK", "docs": []}, {"id": 108, "name": "YASHIKA SINGH", "fatherName": "SHIV MANGAL SINGH", "address": "132A, 2ND FLOOR, 29, ARJUN NAGAR, SAFDERJUNG ENCLAVE, NEW DELHI 29", "dob": "13/04/2004", "aadhar": "248838754159", "category": "EWS", "course": "Medical", "duration": "11 MONTHS", "center": "Lodhi Road", "email": "yashikasinghsisodiya@gmail.com", "mobile": "9650899326", "casteCert": "EWS  Certificate not verify from Revenue portal", "incomeCert": "", "partAB": "YES", "status": "OK", "docs": []}, {"id": 109, "name": "LAKSHYA SHARMA", "fatherName": "JAIDEEP SHARMA", "address": "1-K/A, ARJUN NAGAR, SAFDERJUNG ENCLAVE, NEW DELHI 29", "dob": "08/08/2004", "aadhar": "823828149690", "category": "EWS", "course": "Engineering", "duration": "11 MONTHS", "center": "Lodhi Road", "email": "lakshsharma1970@gmail.com", "mobile": "8130518875, 9818370589", "casteCert": "EWS  Certificate not verify from Revenue portal", "incomeCert": "", "partAB": "YES", "status": "OK", "docs": []}, {"id": 110, "name": "SAYAN KUMAR NANDI", "fatherName": "DAYAL KUMAR NANDI", "address": "13-B, BLOCK-88, CR PARK, ALI KALKAJI, SOUTH DELHI, DELHI-110019", "dob": "20/10/2003", "aadhar": "232910077801", "category": "EWS", "course": "Engineering", "duration": "11 MONTHS", "center": "Lodhi Road", "email": "dayalnandi54rbs@gmail.com", "mobile": "8800186735", "casteCert": "EWS  Certificate not verify from Revenue portal", "incomeCert": "", "partAB": "YES", "status": "OK", "docs": []}, {"id": 111, "name": "PALLAVI", "fatherName": "BHAGIRATH UPADHYAY", "address": "G-1, 266, SANGAM VIHAR, NEW DELHI 80", "dob": "01/07/2003", "aadhar": "619966621186", "category": "EWS", "course": "Medical", "duration": "11 MONTHS", "center": "Lodhi Road", "email": "pallaviupadhyay2003@gmail.com", "mobile": "9911727897, 9205669770", "casteCert": "-", "incomeCert": "-", "partAB": "YES", "status": "NOT OK", "docs": []}, {"id": 112, "name": "PRACHI  SHARMA", "fatherName": "MANISH KUMAR GAUR", "address": "27, BASANT GOUN, NEW DELHI 57", "dob": "13/01/2004", "aadhar": "221778668493", "category": "EWS", "course": "Medical", "duration": "11 MONTHS", "center": "Lodhi Road", "email": "prachisharma9971@gmail.com", "mobile": "9716218318, 9871628483", "casteCert": "EWS  Certificate not verify from Revenue portal", "incomeCert": "", "partAB": "YES", "status": "OK", "docs": []}, {"id": 113, "name": "ARUSHI GUPTA", "fatherName": "MAHIPAL GUPTA", "address": "9/229, DAKSHIN PURI, NEW DELHI 62", "dob": "16/07/2002", "aadhar": "215654936581", "category": "EWS", "course": "Medical", "duration": "11 MONTHS", "center": "Lodhi Road", "email": "arushi4music@gmail.com", "mobile": "9213696371, 011-26053371", "casteCert": "EWS  Certificate not verify from Revenue portal", "incomeCert": "", "partAB": "YES", "status": "OK", "docs": []}, {"id": 114, "name": "DEVESH PARIDA", "fatherName": "NRUSINGH CHARAN PARIDA", "address": "F-520, KHERPUR VILLAGE, KOTLA MUBARAKPUR, NEW DELHI-110003", "dob": "05/02/2005", "aadhar": "655092819822", "category": "EWS", "course": "MEDICAL", "duration": "11 MONTHS", "center": "Lodhi Road", "email": "deveshparida@gmail.com", "mobile": "8588853883", "casteCert": "EWS  Certificate not verify from Revenue portal", "incomeCert": "", "partAB": "YES", "status": "OK", "docs": []}, {"id": 115, "name": "NIHAL SINGH", "fatherName": "DHANNJAY SINGH", "address": "A-46, BAPU PARK, KOTLA MUBARAKPUR, NEW DELHI 03", "dob": "28/04/2004", "aadhar": "374158755511", "category": "EWS", "course": "Engineering", "duration": "11 MONTHS", "center": "Lodhi Road", "email": "dhannjaysingh@gmail.com", "mobile": "9891557079", "casteCert": "-", "incomeCert": "-", "partAB": "YES", "status": "NOT OK", "docs": []}, {"id": 116, "name": "BHASKER GAUR", "fatherName": "GHANSHYAM GAUR", "address": "F-701, LADO SARAI, NEW DELHI 30", "dob": "09/11/2002", "aadhar": "911597366558", "category": "EWS", "course": "Medical", "duration": "11 MONTHS", "center": "Lodhi Road", "email": "bhaskergaur09@gmail.com", "mobile": "7042209389", "casteCert": "EWS  Certificate not verify from Revenue portal", "incomeCert": "", "partAB": "YES", "status": "OK", "docs": []}, {"id": 117, "name": "SAYED MANAAF AHMAD", "fatherName": "S M RASHID", "address": "257B, LANE NO. 1, NOOR NAGAR, JAMIA, NEW DELHI 25", "dob": "08/05/2004", "aadhar": "446225110257", "category": "EWS", "course": "Medical", "duration": "11 MONTHS", "center": "Lodhi Road", "email": "mansayed98@gmail.com", "mobile": "9818011581", "casteCert": "EWS  Certificate not verify from Revenue portal", "incomeCert": "", "partAB": "YES", "status": "OK", "docs": []}, {"id": 118, "name": "LAKSHAY ARORA", "fatherName": "TARUN ARORA", "address": "H.NO. J-42, 3RD FLOOR, SRINIWASPURI, SOUTH DELHI, DELHI-110065", "dob": "19/4/2004", "aadhar": "316910369955", "category": "EWS", "course": "Engineering", "duration": "11 MONTHS", "center": "Lodhi Road", "email": "lakshayarora1904@gmail.com", "mobile": "9667751952", "casteCert": "-", "incomeCert": "-", "partAB": "YES", "status": "NOT OK", "docs": []}, {"id": 119, "name": "SATYA JYOTI GUMATIYA", "fatherName": "ASIT GUMATIYA", "address": "H.NO. 488,GALI NO 9 YADAV CHAUPAL KAPASERA , SOTH WEST DELHI 110037", "dob": "08/08/2003", "aadhar": "721971593338", "category": "EWS", "course": "Engineering", "duration": "11 MONTHS", "center": "Lodhi Road", "email": "satyakumar9953@gmail.com", "mobile": "8368536339", "casteCert": "EWS  Certificate not verify from Revenue portal", "incomeCert": "", "partAB": "YES", "status": "OK", "docs": []}, {"id": 120, "name": "DIWAKAR", "fatherName": "MANORANJAN SINGH", "address": "H.NO.569, GALI NO.11, LAKHPAT COLONY PART-2, BADARPUR, SOUTH DELHI, DELHI-110044", "dob": "02/07/2003", "aadhar": "917135499248", "category": "EWS", "course": "Engineering", "duration": "11 MONTHS", "center": "Lodhi Road", "email": "diwakar845428@gmail.com", "mobile": "9310025409", "casteCert": "EWS  Certificate not verify from Revenue portal", "incomeCert": "", "partAB": "YES", "status": "OK", "docs": []}, {"id": 121, "name": "NITIN PRAKASH", "fatherName": "LATE CHANDER PRAKSH", "address": "D-3/112, GALI NO.10, 3 PUSTA, SONIA VIHAR, SABHAPUR, NORTH EAST DELHI, DELHI-110094", "dob": "24/3/2003", "aadhar": "565906778820", "category": "EWS", "course": "Medical", "duration": "11 MONTHS", "center": "Lodhi Road", "email": "jyotinitin2924@gmail.com", "mobile": "9250022269", "casteCert": "-", "incomeCert": "-", "partAB": "YES", "status": "Rejected", "docs": []}, {"id": 122, "name": "PREETI GUPTA", "fatherName": "SANJAY", "address": "H.NO.265, J-I, GALI NO.14, SANGAM VIHAR,HAMDARD NAGAR, SOUTH DELHI, DELHI-110062", "dob": "02/09/2003", "aadhar": "390482145035", "category": "EWS", "course": "Medical", "duration": "11 MONTHS", "center": "Lodhi Road", "email": "guptapreeti2003kb@gmail.com", "mobile": "7703994774", "casteCert": "EWS  Certificate not verify from Revenue portal", "incomeCert": "", "partAB": "YES", "status": "OK", "docs": []}, {"id": 123, "name": "HRITIKA KAUSHIK", "fatherName": "SATPAL KAUSHIK", "address": "H.NO.58, ZAMRUDPUR, GREATER KAILSHA, PART 1 SOUTH DELHI , DELHI 48", "dob": "24/08/2003", "aadhar": "619864811373", "category": "EWS", "course": "Medical", "duration": "11 MONTHS", "center": "Lodhi Road", "email": "hritika.k0100@gmail.com", "mobile": "9654641606", "casteCert": "EWS  Certificate not verify from Revenue portal", "incomeCert": "", "partAB": "YES", "status": "OK", "docs": []}, {"id": 124, "name": "NANCY GUPTA", "fatherName": "RAJESH GUPTA", "address": "B-1215, GALI NO.19, 1ST PUSTA, SONIA VIHAR, KARAWAL NAGAR, NORTH EAST DELHI, DELHI-110094", "dob": "03/12/2002", "aadhar": "693076896316", "category": "EWS", "course": "Medical", "duration": "11 MONTHS", "center": "Lodhi Road", "email": "snehagupta3235@gmail.com", "mobile": "7982820399", "casteCert": "EWS  Certificate not verify from Revenue portal", "incomeCert": "", "partAB": "YES", "status": "OK", "docs": []}, {"id": 125, "name": "DEEPANJALI", "fatherName": "BHARAT TRIPATHI", "address": "T-806,C/4, 1ST FLOOR,SUKHDEV NAGAR, KOTLA MUBARAKPUR, LODHI ROAD-110003", "dob": "26/10/2003", "aadhar": "469179885809", "category": "EWS", "course": "Medical", "duration": "11 MONTHS", "center": "Lodhi Road", "email": "deepanjalitripathi03@gmail.com", "mobile": "9810183144", "casteCert": "EWS  Certificate not verify from Revenue portal", "incomeCert": "", "partAB": "YES", "status": "OK", "docs": []}, {"id": 126, "name": "VANSHITA SINGH", "fatherName": "MANMOHAN SINGH", "address": "S-500, SCHOOL BLOCK -II , SHAKARPUR NEW DELHI -110092", "dob": "29/08/2002", "aadhar": "858037328948", "category": "EWS", "course": "MEDICAL", "duration": "11 MONTHS", "center": "Lodhi Road", "email": "vanshitasingh2908@gmail.com", "mobile": "9310189544", "casteCert": "EWS  Certificate not verify from Revenue portal", "incomeCert": "", "partAB": "YES", "status": "OK", "docs": []}, {"id": 127, "name": "NEETU TIWARI", "fatherName": "JOGINDER TIWARI", "address": "H-16/861, SANGAM VIHAR, SOUTH DELHI, DELHI-110062", "dob": "09/08/2002", "aadhar": "629982223451", "category": "EWS", "course": "Medical", "duration": "11 MONTHS", "center": "Lodhi Road", "email": "neetutiwari193@gmail.com", "mobile": "8595865791", "casteCert": "EWS  Certificate not verify from Revenue portal", "incomeCert": "", "partAB": "YES", "status": "OK", "docs": []}, {"id": 128, "name": "PARVEEN", "fatherName": "NAVEEN CHANDER", "address": "H NO. N-979, MANGOLPURI, MANGOLPURI N BLOCK, NORT WEST DELHI, DELHI - 110083", "dob": "03/11/2003", "aadhar": "527617146306", "category": "SC", "course": "NEET", "duration": "11 MONTHS", "center": "UTTAM NAGAR", "email": "parveenpro81@gmail.com", "mobile": "7827466812 /9643146427", "casteCert": "-", "incomeCert": "-", "partAB": "YES", "status": "OK", "docs": []}, {"id": 129, "name": "KUSUM", "fatherName": "HARPAL SINGH", "address": "H. NO. - 470 A, DHANSA, SOUTH WEST DELHI,  DELHI - 110073", "dob": "23/08/2003", "aadhar": "266392685300", "category": "SC", "course": "NEET", "duration": "11 MONTHS", "center": "UTTAM NAGAR", "email": "kbdvnsh@gmail.com", "mobile": "9310258194", "casteCert": "-", "incomeCert": "-", "partAB": "YES", "status": "OK", "docs": []}, {"id": 130, "name": "MANJEET SAWARIA", "fatherName": "RAKESH SAWARIA", "address": "A-117, NIHAL VIHAR, NANGLOI, NILOTHI, WEST DELHI, DELHI - 110041", "dob": "28/8/2003", "aadhar": "739922223022", "category": "SC", "course": "NEET", "duration": "11 MONTHS", "center": "UTTAM NAGAR", "email": "manjeetsawaria2003@gmail.com", "mobile": "9891139428", "casteCert": "-", "incomeCert": "-", "partAB": "YES", "status": "OK", "docs": []}, {"id": 131, "name": "ROHIT", "fatherName": "SEEMA RANI", "address": "P/82, GALI NO 5, BIHARI COLONY, SHAHDARA, EAST DELHI, DELHI - 110032", "dob": "09/02/2000", "aadhar": "930749790647", "category": "SC", "course": "NEET", "duration": "11 MONTHS", "center": "UTTAM NAGAR", "email": "rohit112207@gmail.com", "mobile": "8368112207", "casteCert": "Not found on portal", "incomeCert": "YES", "partAB": "YES", "status": "OK", "docs": []}, {"id": 132, "name": "NEHA", "fatherName": "SHRI PRASAD", "address": "C17, AMAR COLONY, SABAPUR DELHI, NORT EAST DELHI, DELHI -110094", "dob": "01/02/2000", "aadhar": "567660404792", "category": "SC", "course": "NEET", "duration": "11 MONTHS", "center": "UTTAM NAGAR", "email": "neha83779597@gmail.com", "mobile": "9643096539", "casteCert": "-", "incomeCert": "-", "partAB": "NO", "status": "NOT OK", "docs": []}, {"id": 133, "name": "VINIT KUMAR", "fatherName": "RAMJAS", "address": "RZ-A, 109 JAI VIHAR, NAJAFGARH, SOUTH WEST DELHI, DELHI - 110043", "dob": "21/7/2003", "aadhar": "266971998443", "category": "SC", "course": "NEET", "duration": "11 MONTHS", "center": "UTTAM NAGAR", "email": "vinitkumar21072003@gmail.com", "mobile": "8700785714", "casteCert": "-", "incomeCert": "-", "partAB": "YES", "status": "OK", "docs": []}, {"id": 134, "name": "PRIYA", "fatherName": "OM PRAKASH", "address": "H. NO.- 4, SAINIK ENCLAVE SEC 3, MOHAN GARDEN, UTTAM NAGAR WEST DELHI - 110059", "dob": "18/9/2002", "aadhar": "381834176263", "category": "SC", "course": "NEET", "duration": "11 MONTHS", "center": "UTTAM NAGAR", "email": "priya9911987042@gmail.com", "mobile": "9911987042", "casteCert": "-", "incomeCert": "-", "partAB": "YES", "status": "OK", "docs": []}, {"id": 135, "name": "VISHAL", "fatherName": "SURESH CHAND", "address": "G-2, 70A, SAI ENCLAVE, PART 2, GALI NO. 14, PEER BABA, MOHAN GARDEN UTTAM NAGAR, WEST DELHI - 110059", "dob": "04/08/2000", "aadhar": "376605198299", "category": "SC", "course": "JEE", "duration": "11 MONTHS", "center": "UTTAM NAGAR", "email": "vishal9654923134@gmail.com", "mobile": "9654923134/ 8802024103", "casteCert": "-", "incomeCert": "-", "partAB": "YES", "status": "OK", "docs": []}, {"id": 136, "name": "SANDEEP GAUTAM", "fatherName": "SHISH PAL SINGH", "address": "PLOT NO. 417, UTSAV VIHAR, NEAR CHURCH KARALA, NORTH WEST DELHI- 110081", "dob": "17/11/2002", "aadhar": "426237903221", "category": "SC", "course": "JEE", "duration": "11 MONTHS", "center": "UTTAM NAGAR", "email": "sandy9599496861@gmail.com", "mobile": "9599496861", "casteCert": "-", "incomeCert": "-", "partAB": "YES", "status": "OK", "docs": []}, {"id": 137, "name": "DEEPA MOURYA", "fatherName": "PARVEEN KUMAR MOURYA", "address": "H. NO. 16/897H, 5, HARDHYAN SINGH ROAD, BAPA NAGAR, KAROL BAGH, S.O. CENTRAL DELHI, DELHI - 110005", "dob": "31/12/2003", "aadhar": "539395937406", "category": "SC", "course": "NEET", "duration": "11 MONTHS", "center": "UTTAM NAGAR", "email": "explorerdeepa@gmail.com", "mobile": "7048957625", "casteCert": "-", "incomeCert": "-", "partAB": "YES", "status": "OK", "docs": []}, {"id": 138, "name": "MUKESH KUMAR", "fatherName": "ONKAR SINGH", "address": "H. NO. - 117, BLOCK - , STREET NO 11, BHAGIRATHI VIHAR, DAYALPUR, NORTH EAST, DELHI - 110094", "dob": "13/07/2002", "aadhar": "596724075882", "category": "SC", "course": "NEET", "duration": "11 MONTHS", "center": "UTTAM NAGAR", "email": "onkar150719@gmail.com", "mobile": "8826155484", "casteCert": "-", "incomeCert": "-", "partAB": "YES", "status": "NOT OK", "docs": []}, {"id": 139, "name": "ANKIT KUMAR", "fatherName": "PRADEEP KUMAR", "address": "B-4/404, J J COLONY, BHALSWA DAIRY, BADLI, NORTH WEST DELHI, DELHI - 110042", "dob": "04/03/2002", "aadhar": "733663468766", "category": "SC", "course": "NEET", "duration": "11 MONTHS", "center": "UTTAM NAGAR", "email": "wwwankitkumar1764@gmail.com", "mobile": "7678564673", "casteCert": "-", "incomeCert": "-", "partAB": "YES", "status": "NOT OK", "docs": []}, {"id": 140, "name": "RAJEEV SINGH", "fatherName": "MADAN SINGH", "address": "WZ-427, NARAINA VILLAGE, NEW DELHI - 110028", "dob": "23/03/2001", "aadhar": "886456819290", "category": "EWS", "course": "JEE", "duration": "11 MONTHS", "center": "UTTAM NAGAR", "email": "rajeevsingh5192@gmail.com", "mobile": "8799705192", "casteCert": "EWS  Certificate not verify from Revenue portal", "incomeCert": "", "partAB": "NO", "status": "OK", "docs": []}, {"id": 141, "name": "KESHAV", "fatherName": "KANHAIYA LAL", "address": "A-153, THIRD FLOOR BACK SIDE, SUDARSHAN PARK, RAMESH NAGAR, H. O. WEST DELHI, DELHI - 110015", "dob": "27/01/2002", "aadhar": "864890717140", "category": "SC", "course": "JEE", "duration": "11 MONTHS", "center": "UTTAM NAGAR", "email": "keshavkohili7210@gmail.com", "mobile": "7217809594", "casteCert": "-", "incomeCert": "-", "partAB": "YES", "status": "OK", "docs": []}, {"id": 142, "name": "YASHWANY SINGH", "fatherName": "YASHPAL SINGH", "address": "J-38, INDIRA GANDHI CAMP NO. - 1, HARI NAGAR ASHRAM, AMBEDKAR PARK, HARI NAGAR ASHRAM, JUNGPURA, SOUTH DELHI, DELHI - 110014", "dob": "01/11/2003", "aadhar": "217991977216", "category": "SC", "course": "NEET", "duration": "11 MONTHS", "center": "UTTAM NAGAR", "email": "yashwanysingh250@gmail.com", "mobile": "9868502510", "casteCert": "-", "incomeCert": "-", "partAB": "YES", "status": "OK", "docs": []}, {"id": 143, "name": "IRAM FATIMA", "fatherName": "MUNTIYAZ", "address": "H. NO. D-175, GALI NO. 12, NEAR NOOR MASJID, OLD MUSTAFABAD, NORTH EAST, DELHI - 110094", "dob": "30/01/2004", "aadhar": "680463796100", "category": "OBC", "course": "NEET", "duration": "11 MONTHS", "center": "UTTAM NAGAR", "email": "iramfatima9590@gmail.com", "mobile": "8585909590", "casteCert": "-", "incomeCert": "-", "partAB": "NO", "status": "OK", "docs": []}, {"id": 144, "name": "NIKHIL YADAV", "fatherName": "SONU YADAV", "address": "A-599, DDA COLONY KHYALA, TILAK NAGAR, WEST DELHI - 110018", "dob": "09/03/2003", "aadhar": "327478935555", "category": "OBC", "course": "NEET", "duration": "11 MONTHS", "center": "UTTAM NAGAR", "email": "nikhilyad888@gmail.com", "mobile": "8595812542", "casteCert": "-", "incomeCert": "-", "partAB": "YES", "status": "NOT OK", "docs": []}, {"id": 145, "name": "GAURAV", "fatherName": "KISHAN SINGH", "address": "H.NO. - 239, BLOCK-S, MANGOL PURI, NORTH WEST DELHI, DELHI - 110083", "dob": "29/9/2003", "aadhar": "558394714517", "category": "OBC", "course": "NEET", "duration": "11 MONTHS", "center": "UTTAM NAGAR", "email": "1412009@gmail.com", "mobile": "7982753308", "casteCert": "-", "incomeCert": "-", "partAB": "YES", "status": "OK", "docs": []}, {"id": 146, "name": "RIZWANA", "fatherName": "BABBU BEG", "address": "G-1, STREET NO. 29, MAHENDER PARK, ADARSH NAGAR, N.S. MANDI, NORTH WEST, DELHI - 110033", "dob": "25/5/2000", "aadhar": "982688233623", "category": "OBC", "course": "NEET", "duration": "11 MONTHS", "center": "UTTAM NAGAR", "email": "begrizwana@gmail.com", "mobile": "9953884332", "casteCert": "-", "incomeCert": "-", "partAB": "YES", "status": "OK", "docs": []}, {"id": 147, "name": "ARBAJ KHAN", "fatherName": "JAHUR KHAN", "address": "B-1/40, SUVIDHA ENCLAVE, BAPROLA, NAGAFGARH, SOUTH WEST DELHI,   DELHI - 110043", "dob": "08/12/2004", "aadhar": "430542790268", "category": "OBC", "course": "NEET", "duration": "11 MONTHS", "center": "UTTAM NAGAR", "email": "arbajkhan98730@gmail.com", "mobile": "9873081067", "casteCert": "-", "incomeCert": "-", "partAB": "YES", "status": "OK", "docs": []}, {"id": 148, "name": "HARSHIKA YADAV", "fatherName": "ANIL KUMAR YADAV", "address": "RZM-53, GALI NO. 4, VIJAY ENCLAVE, SOUTH WEST DELHI, DELHI- 110045", "dob": "07/05/2003", "aadhar": "697673626838", "category": "OBC", "course": "NEET", "duration": "11 MONTHS", "center": "UTTAM NAGAR", "email": "yadav044@gmail.com", "mobile": "9868355479/ 9716406593", "casteCert": "-", "incomeCert": "-", "partAB": "YES", "status": "OK", "docs": []}, {"id": 149, "name": "RAJ NANDNI", "fatherName": "RAM BHAROSE", "address": "H. NO. L5, LAXMAN PURI, NABI KARIM PAHAR GANJ NEW DELHI, SWAMI RAM TIRTH NAGAR, CENTRAL DELHI - 110055", "dob": "13/12/2003", "aadhar": "915170792480", "category": "OBC", "course": "NEET", "duration": "11 MONTHS", "center": "UTTAM NAGAR", "email": "rajnandinikrgm2003@gmail.com", "mobile": "8810384200", "casteCert": "-", "incomeCert": "-", "partAB": "YES", "status": "OK", "docs": []}, {"id": 150, "name": "KHUSHI KUMARI", "fatherName": "UMAKANT VERMA", "address": "M 26, SAINI VIHAR, GALI NO. 8, PHASE -2, MOHAN GARDEN, UTTAM NAGAR, WEST DELHI - 110059", "dob": "02/07/2003", "aadhar": "415288239384", "category": "OBC", "course": "NEET", "duration": "11 MONTHS", "center": "UTTAM NAGAR", "email": "khushikumari06130@gmail.com", "mobile": "8745828785", "casteCert": "-", "incomeCert": "-", "partAB": "YES", "status": "OK", "docs": []}, {"id": 151, "name": "SHAHJAD HUSSAIN", "fatherName": "JAKIR HUSSAIN", "address": "H. NO. 181, PLOT NO. 15/16, SAINIK ENCLAVE, STREET NO. 2, MOHAN GARDEN, WEST DELHI - 110059", "dob": "04/04/2002", "aadhar": "808365237098", "category": "OBC", "course": "JEE", "duration": "11 MONTHS", "center": "UTTAM NAGAR", "email": "shahjad12615@gmail.com", "mobile": "7065081206", "casteCert": "-", "incomeCert": "-", "partAB": "YES", "status": "OK", "docs": []}, {"id": 152, "name": "REHANA KHATOON", "fatherName": "HAMID AKHTAR", "address": "CB-116, NARAINA, RING ROAD, SOUTH WEST DELHI, DELHI - 110028", "dob": "11/08/1999", "aadhar": "685653213728", "category": "OBC", "course": "NEET", "duration": "11 MONTHS", "center": "UTTAM NAGAR", "email": "rehanakhatoon0811@gmail.com", "mobile": "8929894624", "casteCert": "-", "incomeCert": "-", "partAB": "YES", "status": "OK", "docs": []}, {"id": 153, "name": "ARSHEEN", "fatherName": "NISAR AHMAD", "address": "H. NO. B-76, STREET NO. 1, NEAR AQSA MASJID, CHAMAN PARK, JOHRI PUR, SABHAPUR, NORT EAST DELHI - 110094", "dob": "02/11/2003", "aadhar": "546920611307", "category": "OBC", "course": "NEET", "duration": "11 MONTHS", "center": "UTTAM NAGAR", "email": "saarah2khan@gmail.com", "mobile": "7530927532", "casteCert": "-", "incomeCert": "-", "partAB": "YES", "status": "OK", "docs": []}, {"id": 154, "name": "MOHAMMAD IRFAN", "fatherName": "NISAR AHMAD", "address": "H. NO. B-76, STREET NO. 1, NEAR AQSA MASJID, CHAMAN PARK, JOHRI PUR, SABHAPUR, NORT EAST DELHI - 110094", "dob": "07/10/1995", "aadhar": "495142717897", "category": "OBC", "course": "NEET", "duration": "11 MONTHS", "center": "UTTAM NAGAR", "email": "mohirfan333@gmail.com", "mobile": "7530927532", "casteCert": "-", "incomeCert": "-", "partAB": "YES", "status": "Rejected", "docs": []}, {"id": 155, "name": "FURKAN AHMED", "fatherName": "NISAR AHMAD", "address": "H. NO. B-84, GALI NO. 1, CHAMAN PARK, JOHRI PUR, GOKAL PUR, NORT EAST DELHI - 110094", "dob": "07/02/1998", "aadhar": "657969533058", "category": "OBC", "course": "NEET", "duration": "11 MONTHS", "center": "UTTAM NAGAR", "email": "fkahmed333@gmail.com", "mobile": "7530927532", "casteCert": "-", "incomeCert": "-", "partAB": "YES", "status": "NOT OK", "docs": []}, {"id": 156, "name": "ZAINAB MALIK", "fatherName": "SAURABH MALIK", "address": "H. NO. E-128, STREET NO. 5, NEAR BISMILLAH MASJID, SUBHASH MOHALLA, MAUJPUR, NORT EAST DELHI - 110053", "dob": "17/8/2002", "aadhar": "319741308570", "category": "OBC", "course": "NEET", "duration": "11 MONTHS", "center": "UTTAM NAGAR", "email": "hamzamalik1148@gmail.com", "mobile": "9717853568", "casteCert": "-", "incomeCert": "-", "partAB": "YES", "status": "OK", "docs": []}, {"id": 157, "name": "MD. RIZWAN ANSARI", "fatherName": "ABDUL REHMAN ANSARI", "address": "H. NO. 479, MAIN ROAD NEAR CHOPAL BHALAN PANNA, BIJWASAN, SOUTH WEST DELHI, DELHI - 110061", "dob": "24/10/2002", "aadhar": "55729796528", "category": "OBC", "course": "NEET", "duration": "11 MONTHS", "center": "UTTAM NAGAR", "email": "rizwanansari9iii@gmail.com", "mobile": "9717894745", "casteCert": "-", "incomeCert": "-", "partAB": "YES", "status": "OK", "docs": []}, {"id": 158, "name": "HANIYA", "fatherName": "MOHAMMAD SALEEM", "address": "H. NO. 4909, GALI CHHIPIYAN BARA HINDU RAO, DELHI GPO,NORTH WEST DELHI - 110006", "dob": "02/12/2004", "aadhar": "672814276662", "category": "OBC", "course": "NEET", "duration": "11 MONTHS", "center": "UTTAM NAGAR", "email": "haniyakhan7803@gmail.com", "mobile": "7530986400", "casteCert": "-", "incomeCert": "-", "partAB": "YES", "status": "OK", "docs": []}, {"id": 159, "name": "MOHD. ADIL", "fatherName": "AKIL AHMED", "address": "F-30, GALI NO. - 6, BHAGIRATHI VIHAR, MUSTAFABAD, North East Delhi, Delhi 110094", "dob": "25/02/1999", "aadhar": "431222226972", "category": "OBC", "course": "NEET", "duration": "11 MONTHS", "center": "UTTAM NAGAR", "email": "mohdadil3859@gmail.com", "mobile": "8800673859", "casteCert": "-", "incomeCert": "-", "partAB": "YES", "status": "OK", "docs": []}, {"id": 160, "name": "MUSKAN VERMA", "fatherName": "RAJESH VERMA", "address": "H. NO. 395, GALI NO. 1, THAN SINGH NAGAR, NEAR CNG PUMP, ANAND PARBAT, CENTRAL DELHI, DELHI - 110005", "dob": "11/10/2001", "aadhar": "523390276609", "category": "OBC", "course": "NEET", "duration": "11 MONTHS", "center": "UTTAM NAGAR", "email": "mv10112001@gmail.com", "mobile": "9654078112", "casteCert": "-", "incomeCert": "-", "partAB": "YES", "status": "OK", "docs": []}, {"id": 161, "name": "SATYAM", "fatherName": "ANIL KUMAR", "address": "R-5, KARAN VIHAR, PART - 6, GALI NO. - 10, KIRARI, SULEMAN NAGAR, NANGLOI, SULTANPURI, C BLOCK, NORTH WEST  DELHI, DELHI - 110086", "dob": "14/07/2001", "aadhar": "367364610523", "category": "OBC", "course": "NEET", "duration": "11 MONTHS", "center": "UTTAM NAGAR", "email": "satyamalb2c3@gmail.com", "mobile": "9319070948", "casteCert": "-", "incomeCert": "-", "partAB": "YES", "status": "NOT OK", "docs": []}, {"id": 162, "name": "SAMEER", "fatherName": "SHAMSHAD", "address": "H. NO. - B 493, STREET NO. - 6, NEHRU VIHAR, NORTH EASTDELHI, DELHI - 110094", "dob": "25/11/1994", "aadhar": "705562709818", "category": "OBC", "course": "NEET", "duration": "11 MONTHS", "center": "UTTAM NAGAR", "email": "sameeransari85m@gmail.com", "mobile": "8587811794", "casteCert": "-", "incomeCert": "-", "partAB": "YES", "status": "OK", "docs": []}, {"id": 163, "name": "DANIA PARVEEN", "fatherName": "MOHD IRSHAD", "address": "H. NO.- B 27, STREET NO. 3, OLD MUSTAFABAD, NORTH EAST, DELHI - 110094", "dob": "03/01/2003", "aadhar": "427130220855", "category": "OBC", "course": "NEET", "duration": "11 MONTHS", "center": "UTTAM NAGAR", "email": "mohdaffan7827@gmail.com", "mobile": "7827239589", "casteCert": "-", "incomeCert": "-", "partAB": "YES", "status": "Rejected", "docs": []}, {"id": 164, "name": "FAHAD ANWAR", "fatherName": "SHAMS ANWAR", "address": "16 - C, BLOCK - B, BHAGWATI GARDEN, UTTAM NAGAR, WEST DELHI, DELHI - 110059", "dob": "24/07/2002", "aadhar": "286567600474", "category": "OBC", "course": "JEE", "duration": "11 MONTHS", "center": "UTTAM NAGAR", "email": "shamsanwar123@gmail.com", "mobile": "8851537458", "casteCert": "-", "incomeCert": "-", "partAB": "YES", "status": "OK", "docs": []}, {"id": 165, "name": "SAMREEN", "fatherName": "MOHD. SHAM SHAD", "address": "H. NO. 591, GALI NO. - 6, OLD MUSTAFABAD, DAYALPUR, NORTH EAST DELHI, DELHI - 110094", "dob": "08/07/2002", "aadhar": "797795132088", "category": "OBC", "course": "NEET", "duration": "11 MONTHS", "center": "UTTAM NAGAR", "email": "moshahid8700@gmail.com", "mobile": "8700836506", "casteCert": "-", "incomeCert": "-", "partAB": "NO", "status": "NOT OK", "docs": []}, {"id": 166, "name": "RAGINI", "fatherName": "PARSHU RAM", "address": "A-5, MANGOLPURI, N BLOCK, NORTH WEST DELHI, DELHI - 110083", "dob": "08/05/2002", "aadhar": "569318218552", "category": "OBC", "course": "NEET", "duration": "11 MONTHS", "center": "UTTAM NAGAR", "email": "guptaragini391@gmail.com", "mobile": "97115877936", "casteCert": "-", "incomeCert": "-", "partAB": "YES", "status": "OK", "docs": []}, {"id": 167, "name": "TANIYA", "fatherName": "MANCHANDA", "address": "370-A, NEAR PRIMARY SCHOOL BANKENR, NORTH WEST DELHI, DELHI - 110040", "dob": "02/01/2003", "aadhar": "761244247488", "category": "OBC", "course": "NEET", "duration": "11 MONTHS", "center": "UTTAM NAGAR", "email": "taniyakhatri00@gmail.co", "mobile": "7289958412", "casteCert": "-", "incomeCert": "-", "partAB": "NO", "status": "OK", "docs": []}, {"id": 168, "name": "RAJA KUMAR", "fatherName": "SANJIV SHARMA", "address": "30 BLOCK - B, RAMA VIHAR, MOHAMMAD PUR MAJRI, NORTH WEST DELHI, DELHI - 110081", "dob": "01/01/2004", "aadhar": "403760574766", "category": "OBC", "course": "JEE", "duration": "11 MONTHS", "center": "UTTAM NAGAR", "email": "ra1346790@gmail.com", "mobile": "9650428956", "casteCert": "-", "incomeCert": "-", "partAB": "YES", "status": "OK", "docs": []}, {"id": 169, "name": "HARMEET SINGH", "fatherName": "MOHAN SINGH", "address": "WZ-65 A, GALI NO. - 1, GURU NANAK NAGAR, TILAK NAGAR, S. O. WEST DELHI, DELHI - 110018", "dob": "11/02/2004", "aadhar": "437347395361", "category": "OBC", "course": "NEET", "duration": "11 MONTHS", "center": "UTTAM NAGAR", "email": "pritpalkaur2405@gmail.com", "mobile": "9212372989", "casteCert": "-", "incomeCert": "-", "partAB": "YES", "status": "NOT OK", "docs": []}, {"id": 170, "name": "CHESTA ARYA", "fatherName": "PAWAN KUMAR", "address": "H. NO. - 194, GALI NO. - 13, PART-3, MEETHAPUR EXT. JAIPUR, SOUTH DELHI, DELHI - 110044", "dob": "10/01/2004", "aadhar": "366939566685", "category": "OBC", "course": "NEET", "duration": "11 MONTHS", "center": "UTTAM NAGAR", "email": "pklehar@gmail.com", "mobile": "8512006062", "casteCert": "-", "incomeCert": "-", "partAB": "YES", "status": "OK", "docs": []}, {"id": 171, "name": "FAISAL BAIG", "fatherName": "ANWAR BAIG", "address": "H. NO. - C - 138, STREET NO. - 5, BLOCK -C, SHRI RAM COLONY, RAJIV NAGAR, DELHI, DAYALPUR NORTH EAST, DELHI - 110094", "dob": "29/10/1997", "aadhar": "920143139924", "category": "OBC", "course": "NEET", "duration": "11 MONTHS", "center": "UTTAM NAGAR", "email": "faisalbaig00027@gmail.com", "mobile": "9971418178", "casteCert": "-", "incomeCert": "-", "partAB": "YES", "status": "OK", "docs": []}, {"id": 172, "name": "AMAN ASHRAF", "fatherName": "MOHD MUJAHID", "address": "H. NO. - B-244, STREET NO. C-2, CHANDU NAGAR, DELHI, NORTH EAST, DELHI - 110094", "dob": "01/10/1999", "aadhar": "490458531405", "category": "OBC", "course": "NEET", "duration": "11 MONTHS", "center": "UTTAM NAGAR", "email": "mujahid6029@gmail.com", "mobile": "8826575651", "casteCert": "-", "incomeCert": "-", "partAB": "YES", "status": "NOT OK", "docs": []}, {"id": 173, "name": "MOHAMMAD SHAKEEL", "fatherName": "MD. NASEEM", "address": "5B SHIVA ENCLAVE, NEAR MADINA MASJID, VIKAS NAGAR, UTTAM NAGAR, WEST DELHI, DELHI - 110059", "dob": "15/01/1999", "aadhar": "343192708205", "category": "OBC", "course": "NEET", "duration": "11 MONTHS", "center": "UTTAM NAGAR", "email": "mdshakeel030@gmail.com", "mobile": "8802772955", "casteCert": "-", "incomeCert": "-", "partAB": "YES", "status": "OK", "docs": []}, {"id": 174, "name": "MOHD ZAKIR HUSSAIN", "fatherName": "MOHD NASEEM", "address": "HOUSE NO. 5-B, SHIVA, ENCLAVE, VIKAS NAGAR, UTTAM NAGAR, WEST DELHI - 110059", "dob": "01/10/1997", "aadhar": "895940301496", "category": "OBC", "course": "JEE", "duration": "11 MONTHS", "center": "UTTAM NAGAR", "email": "hussainmdzakir4@gmail.com", "mobile": "7982232619", "casteCert": "-", "incomeCert": "-", "partAB": "YES", "status": "OK", "docs": []}, {"id": 175, "name": "QUESH AHAMAD", "fatherName": "JAHIR AHAMAD", "address": "HOUSE NO - 99 AND 99A, FLAT NO. - 05, SECOND FLOOR, GOPAL VIHAR, VIJAY VIHAR, PHASE - 2, ROHINI, NORTH EWST DELHI, DELHI - 110085", "dob": "27/06/1997", "aadhar": "350268825267", "category": "OBC", "course": "JEE", "duration": "11 MONTHS", "center": "UTTAM NAGAR", "email": "queshahamad7@gmail.com", "mobile": "9911038354", "casteCert": "-", "incomeCert": "-", "partAB": "YES", "status": "NOT OK", "docs": []}, {"id": 176, "name": "AAKASH VERMA", "fatherName": "RAHUL VERMA", "address": "HOUSE NO.-2094/4AL, GALI NO. -17, PREM NAGAR, PATEL NAGAR, S.O. CENTRAL DELHI - 110008", "dob": "14/10/2001", "aadhar": "270050724499", "category": "OBC", "course": "NEET", "duration": "11 MONTHS", "center": "UTTAM NAGAR", "email": "vermaaakash305@gmail.com", "mobile": "9958852321", "casteCert": "-", "incomeCert": "-", "partAB": "YES", "status": "OK", "docs": []}, {"id": 177, "name": "MAHIMA YADAV", "fatherName": "RAJMAN", "address": "146/C , DCM, LOCO RAILWAY COLONY, KISHAN  GANJ, DELHI G.P.O. NORTH DELHI, DELHI - 110006", "dob": "15/09/2001", "aadhar": "434882056457", "category": "OBC", "course": "NEET", "duration": "11 MONTHS", "center": "UTTAM NAGAR", "email": "mahimaydv15@gmail.com", "mobile": "9582627811", "casteCert": "-", "incomeCert": "-", "partAB": "YES", "status": "NOT OK", "docs": []}, {"id": 178, "name": "DIVYA", "fatherName": "SHRIRAM BHARDWAJ", "address": "G-556, ANANDVAS, SHAKURPUR, NORTH WEST DELHI, DELHI - 110034", "dob": "29/10/2002", "aadhar": "841940656068", "category": "EWS", "course": "NEET", "duration": "11 MONTHS", "center": "UTTAM NAGAR", "email": "divya29bhardwaj@gmail.com", "mobile": "7015696726", "casteCert": "EWS  Certificate not verify from Revenue portal", "incomeCert": "", "partAB": "YES", "status": "OK", "docs": []}, {"id": 179, "name": "SNEHA", "fatherName": "GOVIND SINGH", "address": "N-512 T FLOOR RAGHUBIR NAGAR, TAGORE GARDEN, WEST DELHI, DELHI - 110027", "dob": "16/06/2004", "aadhar": "437253573351", "category": "EWS", "course": "JEE", "duration": "11 MONTHS", "center": "UTTAM NAGAR", "email": "snehasingh160604@gmail.com", "mobile": "9310657352", "casteCert": "EWS  Certificate not verify from Revenue portal", "incomeCert": "", "partAB": "YES", "status": "OK", "docs": []}, {"id": 180, "name": "SAARA SIDDIQUI", "fatherName": "SANJAY SIDDIQUI", "address": "D-94/3, SEWAK PARK, DWARKA MOR, UTTAM NAGAR, WEST DELHI, DELHI - 110059", "dob": "24/12/2002", "aadhar": "206405917035", "category": "EWS", "course": "NEET", "duration": "11 MONTHS", "center": "UTTAM NAGAR", "email": "sarasiddiqui24@gmail.com", "mobile": "9310181161", "casteCert": "-", "incomeCert": "-", "partAB": "NO", "status": "Rejected", "docs": []}, {"id": 181, "name": "JYOTI", "fatherName": "ASHOK KUMAR", "address": "E-1300, JAHANGIR PURI, NORTH WEST, DELHI - 110033", "dob": "09/03/2000", "aadhar": "600139804986", "category": "EWS", "course": "NEET", "duration": "11 MONTHS", "center": "UTTAM NAGAR", "email": "jyotimathur076@gmail.com", "mobile": "9667553439", "casteCert": "-", "incomeCert": "-", "partAB": "YES", "status": "Rejected", "docs": []}, {"id": 182, "name": "DIYA BISHT", "fatherName": "NARENDRA SINGH BISHT", "address": "RZK-8A, NANDA BLOCK, MAHAVIR ENCLAVE, SOUTH WEST DELHI, DELHI -110045", "dob": "20/3/2004", "aadhar": "433514868614", "category": "EWS", "course": "NEET", "duration": "11 MONTHS", "center": "UTTAM NAGAR", "email": "diyabisht203@gmail.com", "mobile": "9315457267", "casteCert": "-", "incomeCert": "-", "partAB": "YES", "status": "NOT OK", "docs": []}, {"id": 183, "name": "YASH BHATT", "fatherName": "PYARE LAL BHATT", "address": "RZ-22C, PANCHSHIL COLONY, MAHAVIR ENCLAVE, PART -3, WEST DELHI - 110059", "dob": "25/08/2003", "aadhar": "998015901226", "category": "EWS", "course": "NEET", "duration": "11 MONTHS", "center": "UTTAM NAGAR", "email": "yash2003bhatt@gmail.com", "mobile": "7428538530", "casteCert": "EWS  Certificate not verify from Revenue portal", "incomeCert": "", "partAB": "YES", "status": "OK", "docs": []}, {"id": 184, "name": "KUNAL KUMAR PANDAY", "fatherName": "CHUNNU KUMAR PANDAY", "address": "NE-87, STREET NO. 2, VISHNU GARDEN, TILAK NAGAR, S.O. WEST DELHI, DELHI - 110018", "dob": "11/11/2003", "aadhar": "232165982132", "category": "EWS", "course": "NEET", "duration": "11 MONTHS", "center": "UTTAM NAGAR", "email": "kunalkumarpanday5168@gmail.com", "mobile": "9810165168", "casteCert": "EWS  Certificate not verify from Revenue portal", "incomeCert": "", "partAB": "YES", "status": "OK", "docs": []}, {"id": 185, "name": "DIMPLE SHARMA", "fatherName": "ARVIND SHARMA", "address": "D-5, KRISHAN VIHAR, BUDH VIHAR, NORTH WEST DELHI, DELHI - 110086", "dob": "26/11/2002", "aadhar": "312189652869", "category": "EWS", "course": "NEET", "duration": "11 MONTHS", "center": "UTTAM NAGAR", "email": "dimpi2602@gmail.com", "mobile": "9818426042", "casteCert": "EWS  Certificate not verify from Revenue portal", "incomeCert": "", "partAB": "YES", "status": "OK", "docs": []}, {"id": 186, "name": "ADITYA KUMAR", "fatherName": "AMRISH KUMAR", "address": "H.NO. 69 A, A-BLOCK, KESHO RAM PARK, UTTAM NAGAR, WEST DELHI, DELHI - 110059", "dob": "21/03/2003", "aadhar": "635722523962", "category": "EWS", "course": "NEET", "duration": "11 MONTHS", "center": "UTTAM NAGAR", "email": "aditya.always21@gmail.com", "mobile": "9310496998", "casteCert": "EWS  Certificate not verify from Revenue portal", "incomeCert": "", "partAB": "YES", "status": "OK", "docs": []}, {"id": 187, "name": "AIRAM NAZ", "fatherName": "MD. SHAHID", "address": "RZ-D-30, NANGLI VIHAR, PART -1, NANGALI SAKRAWATI, NAJAFGARH, SOUTH WEST DELHI, DELHI - 110043", "dob": "14/02/2004", "aadhar": "968232313187", "category": "EWS", "course": "NEET", "duration": "11 MONTHS", "center": "UTTAM NAGAR", "email": "airamnaz2004@gmail.com", "mobile": "8851073235", "casteCert": "EWS  Certificate not verify from Revenue portal", "incomeCert": "", "partAB": "YES", "status": "OK", "docs": []}, {"id": 188, "name": "ASHUTOSH KUMAR SHUKLA", "fatherName": "DURGESH CHAND SHUKLA", "address": "PLOT NO. - 7/1, DHARM COLONY, NEAR DHARMA COMPLEX, NANGLOI, WEST DELHI, DELHI - 110041", "dob": "24/12/2003", "aadhar": "747897554849", "category": "EWS", "course": "JEE", "duration": "11 MONTHS", "center": "UTTAM NAGAR", "email": "akshukla24122003@gmail.com", "mobile": "8076567642", "casteCert": "-", "incomeCert": "-", "partAB": "YES", "status": "NOT OK", "docs": []}, {"id": 189, "name": "RUPSA MITRA", "fatherName": "SOME NATH MITRA", "address": "3106, MOHALLA DASAN, CHAWARI BAZAR, DELHI G.P.O., NORTH DELHI, DELHI - 110006", "dob": "16/08/2003", "aadhar": "893309185964", "category": "EWS", "course": "NEET", "duration": "11 MONTHS", "center": "UTTAM NAGAR", "email": "mitrabandana1966@gmail.com", "mobile": "9773956392", "casteCert": "-", "incomeCert": "-", "partAB": "YES", "status": "NOT OK", "docs": []}, {"id": 190, "name": "KANCHAN RANI", "fatherName": "SHYAM SUNDER THAKUR", "address": "C-3/106, HARPHOOL, VIHAR, BAPRAULLA WEST DELHI, DELHI - 110043", "dob": "10/10/2003", "aadhar": "516343797744", "category": "EWS", "course": "JEE", "duration": "11 MONTHS", "center": "UTTAM NAGAR", "email": "kashyapkanchan175@gmail.com", "mobile": "9811290271", "casteCert": "-", "incomeCert": "-", "partAB": "YES", "status": "Rejected", "docs": []}, {"id": 191, "name": "SWEETY SINGH", "fatherName": "TRIBHUWAN SINGH", "address": "WZ-270, SHAKUR PUR VILLAGE, SARASWATI VIHAR, NORTH WEST DELHI, DELHI - 110034", "dob": "29/05/2003", "aadhar": "598896933003", "category": "EWS", "course": "NEET", "duration": "11 MONTHS", "center": "UTTAM NAGAR", "email": "contact.sweety29503@gmail.com", "mobile": "8860294817", "casteCert": "EWS  Certificate not verify from Revenue portal", "incomeCert": "", "partAB": "YES", "status": "OK", "docs": []}, {"id": 192, "name": "AATFA BEGUM", "fatherName": "MIRZA TALIB BEG", "address": "WZ-331, VTC, NARAINA VILLAGE, SOUTH WEST DELHI, DELHI - 110028", "dob": "13/08/2002", "aadhar": "671664662736", "category": "EWS", "course": "NEET", "duration": "11 MONTHS", "center": "UTTAM NAGAR", "email": "aatfa132@gmail.com", "mobile": "9711365081", "casteCert": "EWS  Certificate not verify from Revenue portal", "incomeCert": "", "partAB": "YES", "status": "OK", "docs": []}];
+
+// ═══════════════════════════════
+//  STATE
+// ═══════════════════════════════
+let students = [];
+let nextId   = 1000;
+let tab      = 'dashboard';
+let q        = '';
+let fCourse  = 'All';
+let fStatus  = 'All';
+let fCenter  = 'All';
+let page     = 1;
+const PER    = 25;
+let modal    = null;
+let form     = {};
+let addDupWarnings = [];
+
+// ═══════════════════════════════
+//  PERSISTENCE
+// ═══════════════════════════════
+function saveData() {
+  // Strip base64 doc data for storage (only keep metadata)
+  const slim = students.map(s => ({
+    ...s,
+    docs: (s.docs||[]).map(d => ({
+      name: d.name, size: d.size, type: d.type,
+      dataUrl: d.dataUrl  // keep full dataUrl (localStorage can hold ~5MB)
+    }))
+  }));
+  try {
+    localStorage.setItem(STORE, JSON.stringify({ students: slim, nextId }));
+    showSavedBadge();
+  } catch(e) {
+    showToast('Storage full — consider removing large documents', 'error');
+  }
+}
+
+function loadData() {
+  try {
+    const raw = localStorage.getItem(STORE);
+    if (raw) {
+      const d = JSON.parse(raw);
+      students = d.students || [];
+      nextId   = d.nextId   || 1000;
+    } else {
+      // First load — seed from Excel data
+      students = SEED_DATA.map((s,i) => ({ ...s, id: i+1, docs: [] }));
+      nextId   = students.length + 1;
+      saveData();
+    }
+  } catch(e) {
+    students = SEED_DATA.map((s,i) => ({ ...s, id: i+1, docs: [] }));
+    nextId   = students.length + 1;
+  }
+}
+
+function showSavedBadge() {
+  const el = document.getElementById('savedTag');
+  if (!el) return;
+  el.textContent = 'Saved ' + new Date().toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'});
+  el.style.display = 'inline-block';
+}
+
+// ═══════════════════════════════
+//  AUTH
+// ═══════════════════════════════
+function doLogin() {
+  const u = document.getElementById('loginUser').value.trim();
+  const p = document.getElementById('loginPass').value;
+  if (CREDS[u] && CREDS[u] === p) {
+    sessionStorage.setItem(SES, u);
+    document.getElementById('loginScreen').style.display = 'none';
+    document.getElementById('appShell').style.display    = 'block';
+    document.getElementById('sbUser').textContent = u.charAt(0).toUpperCase() + u.slice(1);
+    loadData();
+    renderTab();
+  } else {
+    document.getElementById('loginErr').style.display = 'block';
+  }
+}
+function doLogout() {
+  sessionStorage.removeItem(SES);
+  document.getElementById('appShell').style.display    = 'none';
+  document.getElementById('loginScreen').style.display = 'flex';
+  document.getElementById('loginPass').value = '';
+  document.getElementById('loginErr').style.display = 'none';
+}
+function checkSession() {
+  const u = sessionStorage.getItem(SES);
+  if (u && CREDS[u]) {
+    document.getElementById('loginScreen').style.display = 'none';
+    document.getElementById('appShell').style.display    = 'block';
+    document.getElementById('sbUser').textContent = u.charAt(0).toUpperCase() + u.slice(1);
+    loadData();
+    renderTab();
+  }
+}
+
+// ═══════════════════════════════
+//  SIDEBAR / NAV
+// ═══════════════════════════════
+function toggleSidebar() {
+  document.getElementById('sidebar').classList.toggle('open');
+  document.getElementById('sbOverlay').classList.toggle('open');
+}
+function goTab(t) {
+  tab = t; page = 1;
+  document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+  const nb = document.getElementById('nb-' + t);
+  if (nb) nb.classList.add('active');
+  if (window.innerWidth <= 800) toggleSidebar();
+  renderTab();
+}
+
+// ═══════════════════════════════
+//  DUPLICATE DETECTION
+// ═══════════════════════════════
+function findDuplicates(excludeId = null) {
+  const groups = { name:{}, aadhar:{}, mobile:{}, email:{} };
+  students.forEach(s => {
+    if (s.id === excludeId) return;
+    const n = s.name.trim().toUpperCase();
+    const a = s.aadhar.replace(/\s/g,'');
+    const m = s.mobile.replace(/[\s,\-]/g,'');
+    const e = s.email.trim().toLowerCase();
+    if (n) { groups.name[n]   = groups.name[n]   || []; groups.name[n].push(s.id); }
+    if (a && a.length >= 10) { groups.aadhar[a] = groups.aadhar[a] || []; groups.aadhar[a].push(s.id); }
+    if (m && m.length >= 10) { groups.mobile[m] = groups.mobile[m] || []; groups.mobile[m].push(s.id); }
+    if (e && e.includes('@')) { groups.email[e] = groups.email[e] || []; groups.email[e].push(s.id); }
+  });
+  const dupIds = new Set();
+  const reasons = {};
+  ['name','aadhar','mobile','email'].forEach(field => {
+    Object.entries(groups[field]).forEach(([val, ids]) => {
+      if (ids.length > 1) {
+        ids.forEach(id => {
+          dupIds.add(id);
+          reasons[id] = reasons[id] || [];
+          reasons[id].push(field + ': ' + val);
+        });
+      }
+    });
+  });
+  return { dupIds, reasons };
+}
+
+function checkNewEntry(f, excludeId = null) {
+  const warnings = [];
+  const name  = (f.name||'').trim().toUpperCase();
+  const aadhar= (f.aadhar||'').replace(/\s/g,'');
+  const mobile= (f.mobile||'').replace(/[\s,\-]/g,'');
+  const email = (f.email||'').trim().toLowerCase();
+  students.forEach(s => {
+    if (s.id === excludeId) return;
+    const sn = s.name.trim().toUpperCase();
+    const sa = s.aadhar.replace(/\s/g,'');
+    const sm = s.mobile.replace(/[\s,\-]/g,'');
+    const se = s.email.trim().toLowerCase();
+    const matches = [];
+    if (name  && sn && name === sn)                      matches.push('Name');
+    if (aadhar && aadhar.length>=10 && sa && aadhar===sa) matches.push('Aadhar');
+    if (mobile && mobile.length>=10 && sm && mobile===sm) matches.push('Mobile');
+    if (email  && email.includes('@') && se && email===se)matches.push('Email');
+    if (matches.length) warnings.push({ student: s, fields: matches });
+  });
+  return warnings;
+}
+
+// ═══════════════════════════════
+//  HELPERS
+// ═══════════════════════════════
+function statusPill(st) {
+  if (!st) return '';
+  const s = st.toUpperCase();
+  if (s==='OK') return `<span class="pill p-ok">OK</span>`;
+  if (s==='NOT OK') return `<span class="pill p-notok">Not OK</span>`;
+  if (s==='REJECTED') return `<span class="pill p-rejected">Rejected</span>`;
+  return `<span class="pill p-general">${st}</span>`;
+}
+function catPill(cat) {
+  if (!cat) return '';
+  const c = cat.toUpperCase();
+  if (c==='SC') return `<span class="pill p-sc">SC</span>`;
+  if (c==='ST') return `<span class="pill p-st">ST</span>`;
+  if (c.includes('OBC')) return `<span class="pill p-obc">OBC</span>`;
+  return `<span class="pill p-general">${cat}</span>`;
+}
+function avBg(id) {
+  const colors = ['#DBEAFE:#1E3A8A','#DCFCE7:#166534','#FEE2E2:#991B1B','#EDE9FE:#4C1D95','#FEF3C7:#92400E','#CCFBF1:#134E4A'];
+  const [bg,col] = colors[id % colors.length].split(':');
+  return `background:${bg};color:${col}`;
+}
+function initials(name) {
+  return name.split(' ').filter(Boolean).slice(0,2).map(w=>w[0]).join('').toUpperCase();
+}
+function getFiltered() {
+  return students.filter(s => {
+    const qm = !q || [s.name,s.aadhar,s.mobile,s.email,s.fatherName,s.course,s.center].some(v => v && v.toLowerCase().includes(q.toLowerCase()));
+    const cm = fCourse==='All' || s.course===fCourse;
+    const sm = fStatus==='All' || s.status===fStatus;
+    const cnm= fCenter==='All' || s.center===fCenter;
+    return qm && cm && sm && cnm;
+  });
+}
+function getCourses() { return [...new Set(students.map(s=>s.course).filter(Boolean))].sort(); }
+function getCenters() { return [...new Set(students.map(s=>s.center).filter(Boolean))].sort(); }
+function exportCSV() {
+  const h = ['S.No','Name','Father Name','Address','DOB','Aadhar','Category','Course','Duration','Center','Email','Mobile','Caste Cert','Income Cert','Part A&B','Status','Docs Count'];
+  const rows = students.map(s => [s.id,s.name,s.fatherName,s.address,s.dob,s.aadhar,s.category,s.course,s.duration,s.center,s.email,s.mobile,s.casteCert,s.incomeCert,s.partAB,s.status,(s.docs||[]).length]);
+  const csv = [h,...rows].map(r=>r.map(v=>`"${(v||'').toString().replace(/"/g,'""')}"`).join(',')).join('\n');
+  const a = document.createElement('a'); a.href = 'data:text/csv;charset=utf-8,\uFEFF'+encodeURIComponent(csv); a.download = 'JBPVY_Students_'+new Date().toISOString().slice(0,10)+'.csv'; a.click();
+  showToast('CSV exported successfully', 'success');
+}
+let toastT;
+function showToast(msg, type='success') {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = 'toast toast-' + type;
+  t.classList.add('show');
+  clearTimeout(toastT);
+  toastT = setTimeout(() => t.classList.remove('show'), 3200);
+}
+
+// ═══════════════════════════════
+//  RENDER
+// ═══════════════════════════════
+function renderTab() {
+  const mc = document.getElementById('mainArea');
+  if      (tab === 'dashboard')  mc.innerHTML = renderDashboard();
+  else if (tab === 'students')   mc.innerHTML = renderStudents();
+  else if (tab === 'duplicates') mc.innerHTML = renderDuplicates();
+  else if (tab === 'add')        { mc.innerHTML = renderAddForm(); bindAddFormListeners(); }
+  else if (tab === 'edit')       { mc.innerHTML = renderEditForm(); bindEditFormListeners(); }
+}
+
+// ─── DASHBOARD ───
+function renderDashboard() {
+  const total   = students.length;
+  const ok      = students.filter(s=>(s.status||'').toUpperCase()==='OK').length;
+  const notok   = students.filter(s=>(s.status||'').toUpperCase()==='NOT OK').length;
+  const withDocs= students.filter(s=>(s.docs||[]).length>0).length;
+  const { dupIds } = findDuplicates();
+  const centers = getCenters();
+  const courses = getCourses();
+
+  return `
+  <div class="topbar">
+    <div><h1>Dashboard</h1><p>JAI BHIM MUKHYAMANTRI PRATIBHA VIKAS YOJNA</p></div>
+    <span class="saved-tag" id="savedTag"></span>
+  </div>
+  <div class="stats-row">
+    <div class="stat"><div class="stat-lbl">Total Students</div><div class="stat-val" style="color:var(--blue)">${total}</div><div class="stat-sub">enrolled</div></div>
+    <div class="stat"><div class="stat-lbl">Status OK</div><div class="stat-val" style="color:var(--green)">${ok}</div><div class="stat-sub">${Math.round(ok/total*100)}% of total</div></div>
+    <div class="stat"><div class="stat-lbl">Not OK</div><div class="stat-val" style="color:var(--red)">${notok}</div><div class="stat-sub">need review</div></div>
+    <div class="stat"><div class="stat-lbl">Duplicates</div><div class="stat-val" style="color:var(--amber)">${dupIds.size}</div><div class="stat-sub"><a href="#" onclick="goTab('duplicates');return false" style="color:var(--amber);font-size:11px">view all</a></div></div>
+    <div class="stat"><div class="stat-lbl">With Documents</div><div class="stat-val" style="color:var(--purple)">${withDocs}</div><div class="stat-sub">have uploads</div></div>
+  </div>
+  <div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin-bottom:1.25rem">
+    <div class="card">
+      <div style="font-size:11px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.06em;margin-bottom:12px">Students by Course</div>
+      ${courses.map(c=>{const cnt=students.filter(s=>s.course===c).length;const pct=Math.round(cnt/total*100);return`<div style="margin-bottom:10px"><div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:4px"><span>${c}</span><span style="font-weight:600">${cnt} <span style="color:var(--text3)">(${pct}%)</span></span></div><div style="height:6px;background:var(--border);border-radius:3px;overflow:hidden"><div style="height:100%;width:${pct}%;background:var(--blue);border-radius:3px"></div></div></div>`;}).join('')}
+    </div>
+    <div class="card">
+      <div style="font-size:11px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.06em;margin-bottom:12px">Students by Center</div>
+      ${centers.map(c=>{const cnt=students.filter(s=>s.center===c).length;const pct=Math.round(cnt/total*100);return`<div style="margin-bottom:10px"><div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:4px"><span>${c}</span><span style="font-weight:600">${cnt} <span style="color:var(--text3)">(${pct}%)</span></span></div><div style="height:6px;background:var(--border);border-radius:3px;overflow:hidden"><div style="height:100%;width:${pct}%;background:var(--teal);border-radius:3px"></div></div></div>`;}).join('')}
+    </div>
+  </div>
+  ${dupIds.size > 0 ? `<div class="dup-banner" style="display:block"><div class="dup-banner-title"><svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M8 2L9.5 6H14L10.5 8.5L12 13L8 10.5L4 13L5.5 8.5L2 6H6.5L8 2Z" fill="#CA8A04"/></svg> ${dupIds.size} Duplicate Entries Detected</div><p style="font-size:12px;color:#92400E">Some students share the same Name, Aadhar, Mobile, or Email. <a href="#" onclick="goTab('duplicates');return false" style="color:var(--blue);font-weight:600">Review duplicates →</a></p></div>` : ''}`;
+}
+
+// ─── STUDENTS LIST ───
+function renderStudents() {
+  const filtered = getFiltered();
+  const totalPages = Math.max(1, Math.ceil(filtered.length / PER));
+  if (page > totalPages) page = 1;
+  const slice = filtered.slice((page-1)*PER, page*PER);
+  const { dupIds, reasons } = findDuplicates();
+  const courses = getCourses();
+  const centers = getCenters();
+
+  return `
+  <div class="topbar">
+    <div><h1>All Students</h1><p>${students.length} total enrolled</p></div>
+    <span class="saved-tag" id="savedTag"></span>
+  </div>
+  <div class="card">
+    <div class="toolbar">
+      <input type="text" placeholder="Search name, aadhar, mobile, email, course..." value="${q}" oninput="q=this.value;page=1;renderTab()">
+      <select onchange="fCourse=this.value;page=1;renderTab()">
+        <option value="All">All Courses</option>
+        ${courses.map(c=>`<option${fCourse===c?' selected':''}>${c}</option>`).join('')}
+      </select>
+      <select onchange="fCenter=this.value;page=1;renderTab()">
+        <option value="All">All Centers</option>
+        ${centers.map(c=>`<option${fCenter===c?' selected':''}>${c}</option>`).join('')}
+      </select>
+      <select onchange="fStatus=this.value;page=1;renderTab()">
+        <option value="All">All Status</option>
+        <option${fStatus==='OK'?' selected':''} value="OK">OK</option>
+        <option${fStatus==='NOT OK'?' selected':''} value="NOT OK">Not OK</option>
+        <option${fStatus==='Rejected'?' selected':''} value="Rejected">Rejected</option>
+      </select>
+      <button class="btn" onclick="exportCSV()">Export CSV</button>
+      <button class="btn btn-primary" onclick="goTab('add')">+ Add Student</button>
+    </div>
+    <div class="tbl-wrap">
+    <table>
+      <thead><tr><th>S.No</th><th>Name</th><th>Father's Name</th><th>Aadhar</th><th>Mobile</th><th>Course</th><th>Center</th><th>Category</th><th>Status</th><th>Docs</th><th>Actions</th></tr></thead>
+      <tbody>
+      ${slice.length === 0
+        ? `<tr><td colspan="11" style="text-align:center;padding:2.5rem;color:var(--text3)">No students match your search</td></tr>`
+        : slice.map(s => {
+          const isDup = dupIds.has(s.id);
+          const docCount = (s.docs||[]).length;
+          return `<tr class="${isDup?'dup-row':''}">
+            <td style="color:var(--text3);font-size:12px;font-family:'DM Mono',monospace">${s.id}</td>
+            <td>
+              <div style="display:flex;align-items:center;gap:8px">
+                <div style="width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;flex-shrink:0;${avBg(s.id)}">${initials(s.name)}</div>
+                <span style="font-weight:600">${s.name}${isDup?`<span class="dup-badge" title="${(reasons[s.id]||[]).join(', ')}">⚠ DUP</span>`:''}</span>
+              </div>
+            </td>
+            <td style="color:var(--text2);font-size:12px">${s.fatherName}</td>
+            <td style="font-family:'DM Mono',monospace;font-size:12px">${s.aadhar||'—'}</td>
+            <td style="font-size:12px">${s.mobile||'—'}</td>
+            <td>${s.course||'—'}</td>
+            <td style="font-size:12px;color:var(--text2)">${s.center||'—'}</td>
+            <td>${catPill(s.category)}</td>
+            <td>${statusPill(s.status)}</td>
+            <td><span style="font-size:12px;${docCount>0?'color:var(--blue);font-weight:600':'color:var(--text3)'}">${docCount>0?docCount+' file'+(docCount>1?'s':''):'—'}</span></td>
+            <td style="white-space:nowrap">
+              <button class="btn btn-sm" onclick="openView(${s.id})">View</button>
+              <button class="btn btn-sm" onclick="openEditById(${s.id})" style="margin-left:4px">Edit</button>
+              <button class="btn btn-sm btn-danger" onclick="delStudent(${s.id})" style="margin-left:4px">Del</button>
+            </td>
+          </tr>`;
+        }).join('')}
+      </tbody>
+    </table>
+    </div>
+    <div class="pager">
+      <span>Showing ${filtered.length===0?0:(page-1)*PER+1}–${Math.min(page*PER,filtered.length)} of ${filtered.length} students ${dupIds.size>0?`· <span style="color:var(--amber);font-weight:600">${dupIds.size} duplicates flagged</span>`:''}</span>
+      <div class="pager-btns">
+        <button class="pb" onclick="if(page>1){page--;renderTab()}" ${page===1?'disabled':''}>Prev</button>
+        ${Array.from({length:Math.min(totalPages,7)},(_,i)=>{const p=Math.max(1,Math.min(page-3,totalPages-6))+i;return p<=totalPages?`<button class="pb${p===page?' cur':''}" onclick="page=${p};renderTab()">${p}</button>`:''}).join('')}
+        <button class="pb" onclick="if(page<${totalPages}){page++;renderTab()}" ${page>=totalPages?'disabled':''}>Next</button>
+      </div>
+    </div>
+  </div>`;
+}
+
+// ─── DUPLICATES PAGE ───
+function renderDuplicates() {
+  const { dupIds, reasons } = findDuplicates();
+  const dupStudents = students.filter(s => dupIds.has(s.id));
+  // Group by reason key
+  const groups = {};
+  dupStudents.forEach(s => {
+    (reasons[s.id]||[]).forEach(r => {
+      groups[r] = groups[r] || [];
+      if (!groups[r].find(x=>x.id===s.id)) groups[r].push(s);
+    });
+  });
+
+  return `
+  <div class="topbar">
+    <div><h1>Duplicate Check</h1><p>${dupIds.size} entries flagged across ${Object.keys(groups).length} conflict group(s)</p></div>
+    <span class="saved-tag" id="savedTag"></span>
+  </div>
+  ${dupIds.size === 0
+    ? `<div class="card" style="text-align:center;padding:3rem"><div style="font-size:48px;margin-bottom:12px">✓</div><h3 style="font-size:18px;font-weight:700;color:var(--green)">No Duplicates Found</h3><p style="color:var(--text2);margin-top:6px">All student records have unique Name, Aadhar, Mobile and Email.</p></div>`
+    : Object.entries(groups).map(([reason, grpStudents]) => `
+      <div class="card" style="border-left:4px solid #F59E0B">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px">
+          <span style="font-size:12px;font-weight:700;color:#92400E;background:#FEF9C3;padding:4px 10px;border-radius:9999px">⚠ Duplicate ${reason}</span>
+          <span style="font-size:12px;color:var(--text2)">${grpStudents.length} records share this value</span>
+        </div>
+        <div class="tbl-wrap">
+        <table>
+          <thead><tr><th>ID</th><th>Name</th><th>Father's Name</th><th>Aadhar</th><th>Mobile</th><th>Email</th><th>Course</th><th>Status</th><th>Actions</th></tr></thead>
+          <tbody>
+            ${grpStudents.map(s=>`<tr style="background:#FEF9C3">
+              <td style="font-family:'DM Mono',monospace;font-size:12px;color:var(--text3)">${s.id}</td>
+              <td style="font-weight:600">${s.name}</td>
+              <td style="font-size:12px;color:var(--text2)">${s.fatherName}</td>
+              <td style="font-family:'DM Mono',monospace;font-size:12px">${s.aadhar||'—'}</td>
+              <td style="font-size:12px">${s.mobile||'—'}</td>
+              <td style="font-size:12px">${s.email||'—'}</td>
+              <td style="font-size:12px">${s.course||'—'}</td>
+              <td>${statusPill(s.status)}</td>
+              <td style="white-space:nowrap">
+                <button class="btn btn-sm" onclick="openView(${s.id})">View</button>
+                <button class="btn btn-sm" onclick="openEditById(${s.id})" style="margin-left:4px">Edit</button>
+                <button class="btn btn-sm btn-danger" onclick="delStudent(${s.id})" style="margin-left:4px">Delete</button>
+              </td>
+            </tr>`).join('')}
+          </tbody>
+        </table>
+        </div>
+      </div>`).join('')}`;
+}
+
+// ─── ADD FORM ───
+function renderAddForm() {
+  const courses = getCourses();
+  const centers = getCenters();
+  return `
+  <div class="topbar"><div><h1>Add New Student</h1><p>Fill in details — duplicates will be detected automatically</p></div></div>
+  <div class="dup-banner" id="addDupBanner">
+    <div class="dup-banner-title">⚠ Potential Duplicate Detected</div>
+    <ul id="addDupList"></ul>
+  </div>
+  <div class="card">
+    <div class="sec-hdr">Personal Information</div>
+    <div class="form-grid">
+      <div class="fg"><label>Full Name *</label><input id="a_name" placeholder="Student's full name" oninput="liveCheckDup()"></div>
+      <div class="fg"><label>Father's Name *</label><input id="a_father" placeholder="Father's full name"></div>
+      <div class="fg"><label>Date of Birth</label><input type="text" id="a_dob" placeholder="DD/MM/YYYY"></div>
+      <div class="fg"><label>Aadhar Number *</label><input id="a_aadhar" placeholder="12-digit Aadhar" maxlength="14" oninput="liveCheckDup()"></div>
+      <div class="fg"><label>Mobile Number *</label><input id="a_mobile" placeholder="Mobile number(s)" oninput="liveCheckDup()"></div>
+      <div class="fg"><label>Email Address</label><input type="email" id="a_email" placeholder="Email address" oninput="liveCheckDup()"></div>
+      <div class="fg"><label>Category</label>
+        <select id="a_cat"><option>SC</option><option>ST</option><option>OBC</option><option>General</option></select>
+      </div>
+      <div class="fg"><label>Status</label>
+        <select id="a_status"><option value="OK">OK</option><option value="NOT OK">NOT OK</option><option value="Rejected">Rejected</option></select>
+      </div>
+      <div class="fg fg-full"><label>Address</label><textarea id="a_addr" rows="2" placeholder="Full address"></textarea></div>
+    </div>
+    <div class="sec-hdr">Course & Center</div>
+    <div class="form-grid">
+      <div class="fg"><label>Course Name</label>
+        <input id="a_course" list="course-list" placeholder="Select or type course">
+        <datalist id="course-list">${courses.map(c=>`<option value="${c}">`).join('')}</datalist>
+      </div>
+      <div class="fg"><label>Center Name</label>
+        <input id="a_center" list="center-list" placeholder="Select or type center">
+        <datalist id="center-list">${centers.map(c=>`<option value="${c}">`).join('')}</datalist>
+      </div>
+      <div class="fg"><label>Duration</label><input id="a_duration" placeholder="e.g. 11 MONTHS"></div>
+      <div class="fg"><label>Caste Certificate</label>
+        <select id="a_caste"><option value="-">-</option><option value="YES">YES</option><option value="NO">NO</option></select>
+      </div>
+      <div class="fg"><label>Income Certificate</label>
+        <select id="a_income"><option value="-">-</option><option value="YES">YES</option><option value="NO">NO</option></select>
+      </div>
+      <div class="fg"><label>Part A &amp; B</label>
+        <select id="a_partab"><option value="YES">YES</option><option value="NO">NO</option></select>
+      </div>
+    </div>
+    <div class="sec-hdr">Upload Documents</div>
+    <div class="docs-zone" id="addDocsZone" onclick="document.getElementById('addFileInput').click()" ondragover="event.preventDefault();this.classList.add('drag-over')" ondragleave="this.classList.remove('drag-over')" ondrop="handleFileDrop(event,'add')">
+      <svg width="32" height="32" viewBox="0 0 32 32" fill="none" style="margin:0 auto;display:block;color:var(--text3)"><path d="M16 4v16M8 12l8-8 8 8" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M4 24h24" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M4 24v4h24v-4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      <p>Click to upload or drag &amp; drop files here</p>
+      <div class="hint">PDF, JPG, JPEG supported · Max 5MB per file</div>
+    </div>
+    <input type="file" id="addFileInput" accept=".pdf,.jpg,.jpeg" multiple style="display:none" onchange="handleFileSelect(event,'add')">
+    <div class="doc-list" id="addDocList"></div>
+    <div class="form-actions">
+      <button class="btn" onclick="goTab('students')">Cancel</button>
+      <button class="btn btn-primary" onclick="submitAdd()">Add Student</button>
+    </div>
+  </div>`;
+}
+
+// ─── EDIT FORM ───
+function renderEditForm() {
+  const s = students.find(x=>x.id===form.editId);
+  if (!s) { goTab('students'); return ''; }
+  const courses = getCourses();
+  const centers = getCenters();
+  return `
+  <div class="topbar"><div><h1>Edit Student</h1><p>${s.name}</p></div></div>
+  <div class="dup-banner" id="editDupBanner">
+    <div class="dup-banner-title">⚠ Potential Duplicate Detected</div>
+    <ul id="editDupList"></ul>
+  </div>
+  <div class="card">
+    <div class="sec-hdr">Personal Information</div>
+    <div class="form-grid">
+      <div class="fg"><label>Full Name *</label><input id="e_name" value="${s.name}" oninput="liveCheckDupEdit()"></div>
+      <div class="fg"><label>Father's Name</label><input id="e_father" value="${s.fatherName}"></div>
+      <div class="fg"><label>Date of Birth</label><input id="e_dob" value="${s.dob}"></div>
+      <div class="fg"><label>Aadhar Number</label><input id="e_aadhar" value="${s.aadhar}" oninput="liveCheckDupEdit()"></div>
+      <div class="fg"><label>Mobile Number</label><input id="e_mobile" value="${s.mobile}" oninput="liveCheckDupEdit()"></div>
+      <div class="fg"><label>Email Address</label><input id="e_email" value="${s.email}" oninput="liveCheckDupEdit()"></div>
+      <div class="fg"><label>Category</label>
+        <select id="e_cat"><option${s.category==='SC'?' selected':''}>SC</option><option${s.category==='ST'?' selected':''}>ST</option><option${s.category==='OBC'?' selected':''}>OBC</option><option${s.category==='General'?' selected':''}>General</option></select>
+      </div>
+      <div class="fg"><label>Status</label>
+        <select id="e_status">
+          <option${(s.status||'').toUpperCase()==='OK'?' selected':''} value="OK">OK</option>
+          <option${(s.status||'').toUpperCase()==='NOT OK'?' selected':''} value="NOT OK">NOT OK</option>
+          <option${(s.status||'').toLowerCase()==='rejected'?' selected':''} value="Rejected">Rejected</option>
+        </select>
+      </div>
+      <div class="fg fg-full"><label>Address</label><textarea id="e_addr" rows="2">${s.address}</textarea></div>
+    </div>
+    <div class="sec-hdr">Course & Center</div>
+    <div class="form-grid">
+      <div class="fg"><label>Course</label>
+        <input id="e_course" value="${s.course}" list="ecourse-list">
+        <datalist id="ecourse-list">${courses.map(c=>`<option value="${c}">`).join('')}</datalist>
+      </div>
+      <div class="fg"><label>Center</label>
+        <input id="e_center" value="${s.center}" list="ecenter-list">
+        <datalist id="ecenter-list">${centers.map(c=>`<option value="${c}">`).join('')}</datalist>
+      </div>
+      <div class="fg"><label>Duration</label><input id="e_duration" value="${s.duration}"></div>
+      <div class="fg"><label>Caste Certificate</label>
+        <select id="e_caste"><option value="-"${s.casteCert==='-'?' selected':''}>-</option><option value="YES"${s.casteCert==='YES'?' selected':''}>YES</option><option value="NO"${s.casteCert==='NO'?' selected':''}>NO</option></select>
+      </div>
+      <div class="fg"><label>Income Certificate</label>
+        <select id="e_income"><option value="-"${s.incomeCert==='-'?' selected':''}>-</option><option value="YES"${s.incomeCert==='YES'?' selected':''}>YES</option><option value="NO"${s.incomeCert==='NO'?' selected':''}>NO</option></select>
+      </div>
+      <div class="fg"><label>Part A &amp; B</label>
+        <select id="e_partab"><option value="YES"${s.partAB==='YES'?' selected':''}>YES</option><option value="NO"${s.partAB==='NO'?' selected':''}>NO</option></select>
+      </div>
+    </div>
+    <div class="sec-hdr">Documents</div>
+    <div class="doc-list" id="editDocList"></div>
+    <div class="docs-zone" id="editDocsZone" onclick="document.getElementById('editFileInput').click()" ondragover="event.preventDefault();this.classList.add('drag-over')" ondragleave="this.classList.remove('drag-over')" ondrop="handleFileDrop(event,'edit')">
+      <svg width="28" height="28" viewBox="0 0 32 32" fill="none" style="margin:0 auto;display:block;color:var(--text3)"><path d="M16 4v16M8 12l8-8 8 8" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M4 24h24M4 24v4h24v-4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      <p style="font-size:13px">Add more documents</p>
+      <div class="hint">PDF, JPG, JPEG · Max 5MB each</div>
+    </div>
+    <input type="file" id="editFileInput" accept=".pdf,.jpg,.jpeg" multiple style="display:none" onchange="handleFileSelect(event,'edit')">
+    <div class="form-actions">
+      <button class="btn" onclick="goTab('students')">Cancel</button>
+      <button class="btn btn-primary" onclick="submitEdit()">Save Changes</button>
+    </div>
+  </div>`;
+}
+
+// ═══════════════════════════════
+//  FORM LOGIC
+// ═══════════════════════════════
+let addDocs  = [];
+let editDocs = [];
+
+function bindAddFormListeners() { addDocs = []; renderAddDocList(); }
+function bindEditFormListeners() {
+  const s = students.find(x=>x.id===form.editId);
+  editDocs = s ? JSON.parse(JSON.stringify(s.docs||[])) : [];
+  renderEditDocList();
+}
+
+// Live dup check for add form
+function liveCheckDup() {
+  const f = {
+    name:   document.getElementById('a_name')  ?.value || '',
+    aadhar: document.getElementById('a_aadhar')?.value || '',
+    mobile: document.getElementById('a_mobile')?.value || '',
+    email:  document.getElementById('a_email') ?.value || '',
+  };
+  const warnings = checkNewEntry(f);
+  const banner = document.getElementById('addDupBanner');
+  const list   = document.getElementById('addDupList');
+  if (!banner || !list) return;
+  if (warnings.length > 0) {
+    banner.style.display = 'block';
+    list.innerHTML = warnings.map(w=>`<li><strong>${w.student.name}</strong> (ID ${w.student.id}) — matches on: ${w.fields.join(', ')}</li>`).join('');
+    // Highlight conflicting fields
+    ['name','aadhar','mobile','email'].forEach(field => {
+      const el = document.getElementById('a_' + field);
+      if (!el) return;
+      const hasConflict = warnings.some(w=>w.fields.map(f=>f.toLowerCase()).includes(field));
+      el.classList.toggle('field-dup', hasConflict);
+    });
+  } else {
+    banner.style.display = 'none';
+    ['name','aadhar','mobile','email'].forEach(f => {
+      const el = document.getElementById('a_' + f);
+      if (el) el.classList.remove('field-dup');
+    });
+  }
+}
+function liveCheckDupEdit() {
+  const f = {
+    name:   document.getElementById('e_name')  ?.value || '',
+    aadhar: document.getElementById('e_aadhar')?.value || '',
+    mobile: document.getElementById('e_mobile')?.value || '',
+    email:  document.getElementById('e_email') ?.value || '',
+  };
+  const warnings = checkNewEntry(f, form.editId);
+  const banner = document.getElementById('editDupBanner');
+  const list   = document.getElementById('editDupList');
+  if (!banner || !list) return;
+  if (warnings.length > 0) {
+    banner.style.display = 'block';
+    list.innerHTML = warnings.map(w=>`<li><strong>${w.student.name}</strong> (ID ${w.student.id}) — matches on: ${w.fields.join(', ')}</li>`).join('');
+  } else { banner.style.display = 'none'; }
+}
+
+function gV(id) { const el = document.getElementById(id); return el ? el.value.trim() : ''; }
+
+function submitAdd() {
+  const name  = gV('a_name');
+  const father= gV('a_father');
+  const aadhar= gV('a_aadhar');
+  const mobile= gV('a_mobile');
+  if (!name || !father || !aadhar || !mobile) {
+    showToast('Name, Father Name, Aadhar & Mobile are required', 'error'); return;
+  }
+  const warnings = checkNewEntry({ name, aadhar, mobile, email: gV('a_email') });
+  if (warnings.length > 0) {
+    const proceed = confirm(`⚠ DUPLICATE WARNING\n\nThis student matches existing records:\n${warnings.map(w=>`• ${w.student.name} (matches: ${w.fields.join(', ')})`).join('\n')}\n\nDo you still want to add this student?`);
+    if (!proceed) return;
+  }
+  const newStudent = {
+    id: nextId++, name, fatherName: father,
+    address: gV('a_addr'), dob: gV('a_dob'),
+    aadhar, category: gV('a_cat'), course: gV('a_course'),
+    duration: gV('a_duration'), center: gV('a_center'),
+    email: gV('a_email'), mobile,
+    casteCert: gV('a_caste'), incomeCert: gV('a_income'),
+    partAB: gV('a_partab'), status: gV('a_status'),
+    docs: [...addDocs], joinDate: new Date().toISOString().slice(0,10)
+  };
+  students.push(newStudent);
+  saveData();
+  showToast('Student added successfully!', 'success');
+  goTab('students');
+}
+
+function openEditById(id) {
+  form.editId = id;
+  tab = 'edit';
+  document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));
+  renderTab();
+}
+
+function submitEdit() {
+  const idx = students.findIndex(s=>s.id===form.editId);
+  if (idx < 0) return;
+  const name  = gV('e_name');
+  const aadhar= gV('e_aadhar');
+  const mobile= gV('e_mobile');
+  if (!name) { showToast('Name is required', 'error'); return; }
+  const warnings = checkNewEntry({ name, aadhar, mobile, email: gV('e_email') }, form.editId);
+  if (warnings.length > 0) {
+    const proceed = confirm(`⚠ DUPLICATE WARNING\n\nThis update matches existing records:\n${warnings.map(w=>`• ${w.student.name} (matches: ${w.fields.join(', ')})`).join('\n')}\n\nSave anyway?`);
+    if (!proceed) return;
+  }
+  students[idx] = { ...students[idx],
+    name, fatherName: gV('e_father'), address: gV('e_addr'), dob: gV('e_dob'),
+    aadhar, category: gV('e_cat'), course: gV('e_course'),
+    duration: gV('e_duration'), center: gV('e_center'),
+    email: gV('e_email'), mobile,
+    casteCert: gV('e_caste'), incomeCert: gV('e_income'),
+    partAB: gV('e_partab'), status: gV('e_status'),
+    docs: [...editDocs]
+  };
+  saveData();
+  showToast('Student updated!', 'success');
+  goTab('students');
+}
+
+function delStudent(id) {
+  const s = students.find(x=>x.id===id);
+  if (!s) return;
+  if (confirm(`Delete ${s.name}?\nThis action cannot be undone.`)) {
+    students = students.filter(x=>x.id!==id);
+    saveData(); renderTab();
+    showToast('Student deleted', 'warn');
+  }
+}
+
+// ═══════════════════════════════
+//  DOCUMENT HANDLING
+// ═══════════════════════════════
+function handleFileSelect(event, mode) {
+  const files = Array.from(event.target.files);
+  processFiles(files, mode);
+  event.target.value = '';
+}
+function handleFileDrop(event, mode) {
+  event.preventDefault();
+  const zone = mode==='add' ? document.getElementById('addDocsZone') : document.getElementById('editDocsZone');
+  if (zone) zone.classList.remove('drag-over');
+  processFiles(Array.from(event.dataTransfer.files), mode);
+}
+function processFiles(files, mode) {
+  const allowed = ['application/pdf','image/jpeg','image/jpg'];
+  files.forEach(file => {
+    if (!allowed.includes(file.type) && !file.name.match(/\.(pdf|jpg|jpeg)$/i)) {
+      showToast(`${file.name}: Only PDF, JPG, JPEG allowed`, 'error'); return;
+    }
+    if (file.size > 5*1024*1024) {
+      showToast(`${file.name}: File too large (max 5MB)`, 'error'); return;
+    }
+    const reader = new FileReader();
+    reader.onload = e => {
+      const doc = { name: file.name, size: file.size, type: file.type, dataUrl: e.target.result };
+      if (mode === 'add') { addDocs.push(doc); renderAddDocList(); }
+      else { editDocs.push(doc); renderEditDocList(); }
+    };
+    reader.readAsDataURL(file);
+  });
+}
+function renderAddDocList() {
+  const el = document.getElementById('addDocList');
+  if (!el) return;
+  el.innerHTML = addDocs.map((d,i)=>docItemHTML(d,i,'add')).join('');
+}
+function renderEditDocList() {
+  const el = document.getElementById('editDocList');
+  if (!el) return;
+  el.innerHTML = editDocs.map((d,i)=>docItemHTML(d,i,'edit')).join('');
+}
+function docItemHTML(d, i, mode) {
+  const isPDF = d.type==='application/pdf' || d.name.toLowerCase().endsWith('.pdf');
+  const thumb = isPDF
+    ? `<div class="doc-pdf-icon">PDF</div>`
+    : `<img class="doc-thumb" src="${d.dataUrl}" alt="${d.name}">`;
+  const size = (d.size/1024) < 1024 ? Math.round(d.size/1024)+'KB' : (d.size/1024/1024).toFixed(1)+'MB';
+  return `<div class="doc-item">
+    ${thumb}
+    <span class="doc-name" title="${d.name}">${d.name}</span>
+    <span class="doc-size">${size}</span>
+    <button class="doc-view" onclick="viewDoc('${mode}',${i})">View</button>
+    <button class="doc-del" onclick="removeDoc('${mode}',${i})" title="Remove">×</button>
+  </div>`;
+}
+function removeDoc(mode, i) {
+  if (mode==='add') { addDocs.splice(i,1); renderAddDocList(); }
+  else { editDocs.splice(i,1); renderEditDocList(); }
+}
+function viewDoc(mode, i) {
+  const doc = mode==='add' ? addDocs[i] : editDocs[i];
+  if (!doc) return;
+  openDocViewer(doc);
+}
+
+// ═══════════════════════════════
+//  MODALS
+// ═══════════════════════════════
+function openView(id) {
+  const s = students.find(x=>x.id===id);
+  if (!s) return;
+  const fp  = s.docs ? s.docs.length : 0;
+  const div = document.createElement('div');
+  div.id = 'viewModal';
+  div.className = 'modal-overlay';
+  div.onclick = e => { if(e.target===div) closeViewModal(); };
+  div.innerHTML = `<div class="modal">
+    <div class="modal-hdr">
+      <h3>Student Profile</h3>
+      <button class="close-btn" onclick="closeViewModal()">×</button>
+    </div>
+    <div class="profile-top">
+      <div class="profile-av" style="${avBg(s.id)}">${initials(s.name)}</div>
+      <div>
+        <div style="font-size:18px;font-weight:700">${s.name}</div>
+        <div style="font-size:13px;color:var(--text2);margin-top:3px">ID: ${s.id} · ${catPill(s.category)} ${statusPill(s.status)}</div>
+      </div>
+    </div>
+    <div class="sec-hdr">Personal Details</div>
+    <div class="detail-grid">
+      <div class="di"><div class="di-l">Father's Name</div><div class="di-v">${s.fatherName||'—'}</div></div>
+      <div class="di"><div class="di-l">Date of Birth</div><div class="di-v">${s.dob||'—'}</div></div>
+      <div class="di"><div class="di-l">Aadhar No.</div><div class="di-v" style="font-family:'DM Mono',monospace">${s.aadhar||'—'}</div></div>
+      <div class="di"><div class="di-l">Mobile</div><div class="di-v">${s.mobile||'—'}</div></div>
+      <div class="di"><div class="di-l">Email</div><div class="di-v">${s.email||'—'}</div></div>
+      <div class="di" style="grid-column:1/-1"><div class="di-l">Address</div><div class="di-v">${s.address||'—'}</div></div>
+    </div>
+    <div class="sec-hdr">Course Details</div>
+    <div class="detail-grid">
+      <div class="di"><div class="di-l">Course</div><div class="di-v">${s.course||'—'}</div></div>
+      <div class="di"><div class="di-l">Center</div><div class="di-v">${s.center||'—'}</div></div>
+      <div class="di"><div class="di-l">Duration</div><div class="di-v">${s.duration||'—'}</div></div>
+      <div class="di"><div class="di-l">Category</div><div class="di-v">${s.category||'—'}</div></div>
+      <div class="di"><div class="di-l">Caste Certificate</div><div class="di-v">${s.casteCert||'—'}</div></div>
+      <div class="di"><div class="di-l">Income Certificate</div><div class="di-v">${s.incomeCert||'—'}</div></div>
+      <div class="di"><div class="di-l">Part A &amp; B</div><div class="di-v">${s.partAB||'—'}</div></div>
+      <div class="di"><div class="di-l">Status</div><div class="di-v">${statusPill(s.status)}</div></div>
+    </div>
+    ${fp > 0 ? `<div class="sec-hdr">Documents (${fp})</div>
+    <div class="doc-list">${(s.docs||[]).map((d,i)=>docItemHTMLView(d,id,i)).join('')}</div>` : ''}
+    <div class="form-actions">
+      <button class="btn" onclick="closeViewModal()">Close</button>
+      <button class="btn btn-primary" onclick="closeViewModal();openEditById(${s.id})">Edit Student</button>
+    </div>
+  </div>`;
+  document.body.appendChild(div);
+}
+
+function docItemHTMLView(d, studentId, i) {
+  const isPDF = d.type==='application/pdf' || d.name.toLowerCase().endsWith('.pdf');
+  const thumb = isPDF
+    ? `<div class="doc-pdf-icon">PDF</div>`
+    : `<img class="doc-thumb" src="${d.dataUrl}" alt="${d.name}">`;
+  const size = (d.size/1024)<1024 ? Math.round(d.size/1024)+'KB' : (d.size/1024/1024).toFixed(1)+'MB';
+  return `<div class="doc-item">
+    ${thumb}
+    <span class="doc-name" title="${d.name}">${d.name}</span>
+    <span class="doc-size">${size}</span>
+    <button class="doc-view" onclick="viewDocFromStudent(${studentId},${i})">View</button>
+  </div>`;
+}
+
+function closeViewModal() { const el=document.getElementById('viewModal'); if(el) el.remove(); }
+
+function openDocViewer(doc) {
+  const isPDF = doc.type==='application/pdf' || doc.name.toLowerCase().endsWith('.pdf');
+  const div = document.createElement('div');
+  div.id = 'docViewerModal';
+  div.className = 'modal-overlay';
+  div.onclick = e => { if(e.target===div) div.remove(); };
+  const content = isPDF
+    ? `<iframe src="${doc.dataUrl}" title="${doc.name}"></iframe>`
+    : `<img src="${doc.dataUrl}" alt="${doc.name}" style="max-width:100%;max-height:70vh;object-fit:contain;border-radius:8px">`;
+  div.innerHTML = `<div class="doc-viewer-modal">
+    <div style="display:flex;align-items:center;justify-content:space-between">
+      <span style="font-weight:700;font-size:15px">${doc.name}</span>
+      <div style="display:flex;gap:8px">
+        <a href="${doc.dataUrl}" download="${doc.name}" class="btn btn-sm btn-success">Download</a>
+        <button class="close-btn" onclick="document.getElementById('docViewerModal').remove()">×</button>
+      </div>
+    </div>
+    ${content}
+  </div>`;
+  document.body.appendChild(div);
+}
+
+function viewDocFromStudent(studentId, docIdx) {
+  const s = students.find(x=>x.id===studentId);
+  if (!s || !s.docs || !s.docs[docIdx]) return;
+  openDocViewer(s.docs[docIdx]);
+}
+
+// ═══════════════════════════════
+//  INIT
+// ═══════════════════════════════
+checkSession();
+</script>
+</body>
+</html>
