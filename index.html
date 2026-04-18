@@ -826,6 +826,10 @@ async function syncFromSupabase() {
     db.questions = (questionsRes.data||[]).map(rowToQuestion);
     db.results = (resultsRes.data||[]).map(rowToResult);
     db.subcategories = subcatsRes.data || [];
+    // Ensure admin always exists locally even if not in Supabase
+    const adminDefault = DEFAULT_USERS.find(u => u.role === 'admin');
+    const hasAdminInRemote = remoteUsers.find(u => u.role === 'admin');
+    if (!hasAdminInRemote) remoteUsers.unshift(adminDefault);
 
     // If Supabase has no admin, push everything from localStorage
     const hasAdmin = remoteUsers.find(u => u.role === 'admin');
@@ -2983,7 +2987,9 @@ function rejectStudent(username) {
   showConfirm('Reject registration for <strong>' + u.name + '</strong>?', function() {
     const i = db.users.findIndex(x=>x.username===username);
     db.users[i].status = 'rejected';
-    saveDB(); updatePendingBadge(); goPage('students-admin');
+    saveDB();
+    pushUserToSupabase(db.users[i]);
+    updatePendingBadge(); goPage('students-admin');
     showToast('Registration rejected.', 'warn');
   }, 'danger');
 }
@@ -3023,7 +3029,9 @@ function toggleSuspend(username) {
     const i = db.users.findIndex(x=>x.username===username);
     db.users[i].suspended = !db.users[i].suspended;
     const done = db.users[i].suspended ? 'suspended' : 'restored';
-    saveDB(); goPage('students-admin');
+    saveDB();
+    pushUserToSupabase(db.users[i]);
+    goPage('students-admin');
     showToast('Account ' + done + ' for ' + db.users[i].name, db.users[i].suspended?'warn':'success');
   }, u.suspended ? 'warn' : 'danger');
 }
@@ -3198,7 +3206,9 @@ function saveResetPw(username) {
   const idx = db.users.findIndex(u => u.username === username);
   if (idx < 0) return;
   db.users[idx].password = pw;
-  saveDB(); closeModal();
+  saveDB();
+  pushUserToSupabase(db.users[idx]);
+  closeModal();
   showToast('Password reset successfully!', 'success');
 }
 
@@ -3535,6 +3545,7 @@ function saveStudentPassword() {
   currentUser = db.users[idx];
   sessionStorage.setItem('ssc_session', JSON.stringify(currentUser));
   saveDB();
+  pushUserToSupabase(db.users[idx]);
   document.getElementById('sp_cur_pw').value = '';
   document.getElementById('sp_new_pw').value = '';
   document.getElementById('sp_conf_pw').value = '';
@@ -3685,6 +3696,7 @@ function saveProfilePassword() {
   currentUser = db.users[idx];
   sessionStorage.setItem('ssc_session', JSON.stringify(currentUser));
   saveDB();
+  pushUserToSupabase(currentUser);
   showToast('Password changed successfully!', 'success');
   goPage('profile');
 }
