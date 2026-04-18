@@ -331,24 +331,54 @@ body{font-family:'Nunito',sans-serif;background:var(--bg);color:var(--text);min-
 .review-opt.not-sel{color:var(--text2)}
 
 /* ══════════════════ RESPONSIVE ══════════════════ */
+/* ══════════════════ MOBILE BOTTOM NAV ══════════════════ */
+.mobile-nav{display:none;position:fixed;bottom:0;left:0;right:0;z-index:200;background:var(--surface);border-top:1px solid var(--border);padding:6px 0 8px;box-shadow:0 -2px 10px rgba(0,0,0,.08)}
+.mobile-nav-items{display:flex;justify-content:space-around;align-items:center}
+.mobile-nav-item{display:flex;flex-direction:column;align-items:center;gap:2px;padding:4px 12px;cursor:pointer;background:none;border:none;font-family:inherit;color:var(--text2);font-size:10px;font-weight:600;transition:color .15s}
+.mobile-nav-item.active{color:var(--primary)}
+.mobile-nav-item svg{width:20px;height:20px}
+
+/* ══════════════════ TABLET ══════════════════ */
 @media(max-width:900px){
   .sidebar{display:none}
+  .mobile-nav{display:block}
+  .content{padding:1rem;padding-bottom:80px}
   .stats-row{grid-template-columns:repeat(2,minmax(0,1fr))}
   .result-stats{grid-template-columns:repeat(2,minmax(0,1fr))}
   .section-analysis{grid-template-columns:1fr}
   .login-left{display:none}
   .login-wrap::before{display:none}
+  .tests-grid{grid-template-columns:repeat(auto-fill,minmax(260px,1fr))}
+  .topnav{padding:0 1rem}
 }
+
+/* ══════════════════ MOBILE ══════════════════ */
 @media(max-width:700px){
   .exam-body{flex-direction:column}
-  .sidebar-panel{width:100%;border-left:none;border-top:1px solid var(--border)}
+  .sidebar-panel{width:100%;border-left:none;border-top:1px solid var(--border);max-height:220px}
   .review-opts{grid-template-columns:1fr}
   .form-grid{grid-template-columns:1fr}
+  .modal{padding:1rem;max-height:95vh}
+  .login-card{padding:1.5rem 1.25rem}
+  .page-hdr h1{font-size:20px}
+  .exam-topbar{padding:.4rem .75rem}
+  .exam-title{font-size:13px}
+  .question-panel{padding:.75rem}
+  .q-text{font-size:13px}
+  .result-hero{padding:1.5rem 1rem}
+  .score-ring{width:110px;height:110px}
+  .topnav-brand img{height:36px}
 }
+
+/* ══════════════════ SMALL MOBILE ══════════════════ */
 @media(max-width:500px){
   .stats-row{grid-template-columns:repeat(2,minmax(0,1fr))}
   .result-stats{grid-template-columns:repeat(2,minmax(0,1fr))}
   .tests-grid{grid-template-columns:1fr}
+  .user-chip span#userChipName{display:none}
+  .section-analysis{grid-template-columns:1fr}
+  .form-actions{flex-wrap:wrap}
+  .form-actions .btn{flex:1;min-width:100px;text-align:center}
 }
 </style>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js" defer onerror="console.warn('mammoth.js not loaded - Word import unavailable')"></script>
@@ -511,6 +541,36 @@ body{font-family:'Nunito',sans-serif;background:var(--bg);color:var(--text);min-
     <!-- Content -->
     <main class="content" id="pageContent"></main>
   </div>
+
+  <!-- Mobile Bottom Navigation -->
+  <nav class="mobile-nav" id="mobileNav">
+    <div class="mobile-nav-items">
+      <button class="mobile-nav-item" id="mni-home" onclick="goPage('home')">
+        <svg viewBox="0 0 16 16" fill="none"><path d="M2 6.5L8 2l6 4.5V14a1 1 0 01-1 1H3a1 1 0 01-1-1V6.5z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/></svg>
+        Home
+      </button>
+      <button class="mobile-nav-item" id="mni-tests" onclick="goPage('tests')">
+        <svg viewBox="0 0 16 16" fill="none"><rect x="2" y="2" width="12" height="12" rx="2" stroke="currentColor" stroke-width="1.5"/><path d="M5 5h6M5 8h6M5 11h4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+        Tests
+      </button>
+      <button class="mobile-nav-item student-only-item" id="mni-results" onclick="goPage('results')">
+        <svg viewBox="0 0 16 16" fill="none"><path d="M2 12L6 7l3 3 2-2.5 3 3.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        Results
+      </button>
+      <button class="mobile-nav-item admin-only-item" id="mni-admin-m" onclick="goPage('admin')">
+        <svg viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="3" stroke="currentColor" stroke-width="1.5"/><path d="M8 1v2M8 13v2M1 8h2M13 8h2" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+        Manage
+      </button>
+      <button class="mobile-nav-item admin-only-item" id="mni-students-m" onclick="window._stuTab='all';goPage('students-admin')">
+        <svg viewBox="0 0 16 16" fill="none"><circle cx="6" cy="5" r="2.5" stroke="currentColor" stroke-width="1.5"/><path d="M1 13c0-2.761 2.239-5 5-5M11 9v6M8 12h6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+        Students
+      </button>
+      <button class="mobile-nav-item" id="mni-profile-m" onclick="currentUser&&currentUser.role==='admin'?goPage('profile'):goPage('student-profile')">
+        <svg viewBox="0 0 16 16" fill="none"><circle cx="8" cy="5" r="2.5" stroke="currentColor" stroke-width="1.5"/><path d="M2 14c0-3.314 2.686-6 6-6s6 2.686 6 6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+        Profile
+      </button>
+    </div>
+  </nav>
 </div>
 
 <!-- ══════════ EXAM INTERFACE ══════════ -->
@@ -802,26 +862,18 @@ function checkSession() {
 
 
 function showAdminUI() {
-  // Show all admin-only sidebar items
   document.querySelectorAll('.admin-only-item').forEach(function(el) {
-    if (el.tagName === 'BUTTON') {
-      el.style.display = 'flex';
-    } else {
-      el.style.display = 'block';
-    }
+    el.style.display = 'flex';
   });
-  // Hide student-only sidebar items for admin
   document.querySelectorAll('.student-only-item').forEach(function(el) {
     el.style.display = 'none';
   });
 }
 
 function showStudentUI() {
-  // Explicitly force-hide ALL admin-only items (clears any lingering inline styles)
   document.querySelectorAll('.admin-only-item').forEach(function(el) {
     el.style.display = 'none';
   });
-  // Show student-only items
   document.querySelectorAll('.student-only-item').forEach(function(el) {
     el.style.display = 'flex';
   });
@@ -839,8 +891,15 @@ function goPage(p, skipHistory) {
   }
   currentPage = p;
   document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+  document.querySelectorAll('.mobile-nav-item').forEach(el => el.classList.remove('active'));
   const nb = document.getElementById('ni-' + p);
   if (nb) nb.classList.add('active');
+  // Mobile nav highlighting
+  const mobileMap = {home:'mni-home',tests:'mni-tests',results:'mni-results',
+    admin:'mni-admin-m','students-admin':'mni-students-m',
+    profile:'mni-profile-m','student-profile':'mni-profile-m'};
+  const mnb = document.getElementById(mobileMap[p]);
+  if (mnb) mnb.classList.add('active');
   // Highlight the right sidebar item when students-admin is opened via Student Management
   if (p === 'students-admin') {
     const tab = window._stuTab || 'pending';
@@ -1138,6 +1197,8 @@ function startTest(testId) {
   document.getElementById('examWrap').style.display = 'flex';
   document.getElementById('resultWrap').style.display = 'none';
   document.body.style.overflow = 'hidden';
+  var mn = document.getElementById('mobileNav');
+  if (mn) mn.style.display = 'none';
   document.getElementById('examTitle').textContent = test.title;
   document.getElementById('examSubInfo').textContent = `${questions.length} Questions · ${test.marks} Marks · -${test.negMarking} Negative Marking`;
 
@@ -1427,6 +1488,8 @@ function backToApp() {
   document.getElementById('resultWrap').style.display = 'none';
   document.getElementById('app').style.display = 'block';
   document.body.style.overflow = '';
+  var mn = document.getElementById('mobileNav');
+  if (mn) mn.style.display = '';
   goPage('home');
 }
 
