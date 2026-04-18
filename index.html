@@ -2169,53 +2169,48 @@ function updateSubcatOptions(categoryId, selectId) {
   sel.innerHTML = '<option value="">-- None --</option>' + subcats.map(sc => `<option value="${sc.id}">${sc.name}</option>`).join('');
 }
 
-function openSubcategoryManager() {
-  function renderSubcatList() {
-    const cats = EXAM_CATEGORIES.map(cat => {
-      const subs = (db.subcategories||[]).filter(sc => sc.categoryId === cat.id);
-      const subsHtml = subs.length === 0
-        ? '<div style="font-size:12px;color:var(--text3);padding:6px 14px">No subcategories yet</div>'
-        : subs.map(sc =>
-            '<div style="display:flex;align-items:center;gap:8px;padding:8px 14px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);margin-bottom:4px">'
-            + '<span style="flex:1;font-size:13px;font-weight:600">'+sc.name+'</span>'
-            + '<span style="font-size:11px;color:var(--text3)">'+db.tests.filter(t=>t.subcategoryId===sc.id).length+' tests</span>'
-            + '<button class="btn btn-ghost btn-sm" onclick="renameSubcat(this.dataset.id)" data-id="'+sc.id+'">Rename</button>'
-            + '<button class="btn btn-red btn-sm" onclick="deleteSubcat(this.dataset.id)" data-id="'+sc.id+'">✕</button>'
-            + '</div>'
-          ).join('');
-      return '<div style="margin-bottom:16px">'
-        + '<div style="display:flex;align-items:center;gap:8px;padding:10px 14px;background:'+cat.bg+';border-radius:var(--radius);border-left:3px solid '+cat.color+';margin-bottom:8px">'
-        + '<span>'+cat.icon+'</span>'
-        + '<span style="font-weight:800;color:'+cat.color+'">'+cat.label+'</span>'
-        + '<button class="btn btn-primary btn-sm" style="margin-left:auto" onclick="addSubcategory(this.dataset.id)" data-id="'+cat.id+'">+ Add</button>'
-        + '</div>'
-        + subsHtml
-        + '</div>';
-    }).join('');
-    return cats;
-  }
+function buildSubcatListHtml() {
+  return EXAM_CATEGORIES.map(cat => {
+    const subs = (db.subcategories||[]).filter(sc => sc.categoryId === cat.id);
+    const subsHtml = subs.length === 0
+      ? '<div style="font-size:12px;color:var(--text3);padding:6px 14px">No subcategories yet</div>'
+      : subs.map(sc =>
+          '<div style="display:flex;align-items:center;gap:8px;padding:8px 14px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);margin-bottom:4px">'
+          + '<span style="flex:1;font-size:13px;font-weight:600">' + sc.name + '</span>'
+          + '<span style="font-size:11px;color:var(--text3)">' + db.tests.filter(t=>t.subcategoryId===sc.id).length + ' tests</span>'
+          + '<button class="btn btn-ghost btn-sm" onclick="renameSubcat(this.dataset.id)" data-id="' + sc.id + '">Rename</button>'
+          + '<button class="btn btn-red btn-sm" onclick="deleteSubcat(this.dataset.id)" data-id="' + sc.id + '">✕</button>'
+          + '</div>'
+        ).join('');
+    return '<div style="margin-bottom:16px">'
+      + '<div style="display:flex;align-items:center;gap:8px;padding:10px 14px;background:' + cat.bg + ';border-radius:var(--radius);border-left:3px solid ' + cat.color + ';margin-bottom:8px">'
+      + '<span>' + cat.icon + '</span>'
+      + '<span style="font-weight:800;color:' + cat.color + '">' + cat.label + '</span>'
+      + '<button class="btn btn-primary btn-sm" style="margin-left:auto" onclick="addSubcategory(this.dataset.id)" data-id="' + cat.id + '">+ Add</button>'
+      + '</div>'
+      + subsHtml
+      + '</div>';
+  }).join('');
+}
 
-  showModal(`
-    <div class="modal-hdr"><h3>Manage Subcategories</h3><button class="close-btn" onclick="closeModal()">×</button></div>
-    <div style="max-height:70vh;overflow-y:auto;padding:4px">
-      <div id="subcat_list">${renderSubcatList()}</div>
-    </div>
-    <div class="form-actions">
-      <button class="btn btn-ghost" onclick="closeModal()">Close</button>
-    </div>`);
+function openSubcategoryManager() {
+  const html = buildSubcatListHtml();
+  showModal(
+    '<div class="modal-hdr"><h3>Manage Subcategories</h3><button class="close-btn" onclick="closeModal()">×</button></div>'
+    + '<div style="max-height:70vh;overflow-y:auto;padding:4px">' + html + '</div>'
+    + '<div class="form-actions"><button class="btn btn-ghost" onclick="closeModal()">Close</button></div>'
+  );
 }
 
 function addSubcategory(categoryId) {
   const cat = EXAM_CATEGORIES.find(c => c.id === categoryId);
-  showModal(`
-    <div class="modal-hdr"><h3>Add Subcategory under ${cat.icon} ${cat.label}</h3><button class="close-btn" onclick="openSubcategoryManager()">×</button></div>
-    <div class="form-grid">
-      <div class="fg fg-full"><label>Subcategory Name</label><input id="sc_name" placeholder="e.g. SSC CGL, IBPS PO, RRB NTPC"></div>
-    </div>
-    <div class="form-actions">
-      <button class="btn btn-ghost" onclick="openSubcategoryManager()">Cancel</button>
-      <button class="btn btn-primary" onclick="saveSubcategory('${categoryId}')">Add</button>
-    </div>`);
+  if (!cat) return;
+  window._pendingCatId = categoryId;
+  showModal(
+    '<div class="modal-hdr"><h3>Add Subcategory under ' + cat.icon + ' ' + cat.label + '</h3><button class="close-btn" onclick="openSubcategoryManager()">×</button></div>'
+    + '<div class="form-grid"><div class="fg fg-full"><label>Subcategory Name</label><input id="sc_name" placeholder="e.g. SSC CGL, IBPS PO, RRB NTPC"></div></div>'
+    + '<div class="form-actions"><button class="btn btn-ghost" onclick="openSubcategoryManager()">Cancel</button><button class="btn btn-primary" onclick="saveSubcategory(window._pendingCatId)">Add</button></div>'
+  );
   setTimeout(() => document.getElementById('sc_name')?.focus(), 100);
 }
 
@@ -2232,15 +2227,12 @@ function saveSubcategory(categoryId) {
 function renameSubcat(id) {
   const sc = (db.subcategories||[]).find(x => x.id === id);
   if (!sc) return;
-  showModal(`
-    <div class="modal-hdr"><h3>Rename Subcategory</h3><button class="close-btn" onclick="openSubcategoryManager()">×</button></div>
-    <div class="form-grid">
-      <div class="fg fg-full"><label>Subcategory Name</label><input id="sc_rename" value="${sc.name}"></div>
-    </div>
-    <div class="form-actions">
-      <button class="btn btn-ghost" onclick="openSubcategoryManager()">Cancel</button>
-      <button class="btn btn-primary" onclick="saveRenameSubcat('${id}')">Save</button>
-    </div>`);
+  window._pendingSubcatId = id;
+  showModal(
+    '<div class="modal-hdr"><h3>Rename Subcategory</h3><button class="close-btn" onclick="openSubcategoryManager()">×</button></div>'
+    + '<div class="form-grid"><div class="fg fg-full"><label>Subcategory Name</label><input id="sc_rename" value="' + sc.name.replace(/"/g,'&quot;') + '"></div></div>'
+    + '<div class="form-actions"><button class="btn btn-ghost" onclick="openSubcategoryManager()">Cancel</button><button class="btn btn-primary" onclick="saveRenameSubcat(window._pendingSubcatId)">Save</button></div>'
+  );
   setTimeout(() => document.getElementById('sc_rename')?.focus(), 100);
 }
 
@@ -2874,16 +2866,19 @@ function triggerDownload(content, filename, mimeType) {
 
 function backupAllData() {
   const backup = {
-    version: 1,
+    version: 2,
     exportedAt: new Date().toISOString(),
+    appName: 'my-e-learner by Sachdeva College',
     users: db.users,
     tests: db.tests,
     questions: db.questions,
-    results: db.results
+    results: db.results,
+    subcategories: db.subcategories || []
   };
   const json = JSON.stringify(backup, null, 2);
-  triggerDownload(json, 'my-elearner-backup-' + new Date().toISOString().slice(0,10) + '.json', 'application/json');
-  showToast('Full backup downloaded!', 'success');
+  const filename = 'myelearner-backup-' + new Date().toISOString().slice(0,10) + '.json';
+  triggerDownload(json, filename, 'application/json');
+  showToast('✅ Full backup downloaded! Students: ' + db.users.filter(u=>u.role==='student').length + ', Tests: ' + db.tests.length + ', Questions: ' + db.questions.length, 'success');
 }
 
 function restoreAllData(input) {
@@ -2895,17 +2890,21 @@ function restoreAllData(input) {
       const backup = JSON.parse(e.target.result);
       if (!backup.users || !backup.tests) throw new Error('Invalid backup file');
       showConfirm('Restore backup from <strong>' + new Date(backup.exportedAt).toLocaleDateString('en-IN') + '</strong>?<br><small style="color:var(--text2)">This will replace all current data.</small>', function() {
-        db.users    = backup.users    || [];
-        db.tests    = backup.tests    || [];
-        db.questions= backup.questions|| [];
-        db.results  = backup.results  || [];
+        db.users         = backup.users         || [];
+        db.tests         = backup.tests         || [];
+        db.questions     = backup.questions     || [];
+        db.results       = backup.results       || [];
         db.subcategories = backup.subcategories || [];
-        // Keep admin from backup as-is (do NOT reset to default)
-        // Only add default admin if completely missing from backup
+        // Keep admin from backup exactly as-is (preserves custom username & password)
         const adminIdx = db.users.findIndex(u => u.role === 'admin');
         if (adminIdx < 0) db.users.unshift(DEFAULT_USERS.find(u => u.role === 'admin'));
+        // Migrate: ensure tests have required fields
+        db.tests.forEach(t => {
+          if (t.published === undefined) t.published = true;
+          if (!t.examCategory) t.examCategory = 'SSC';
+        });
         saveDB();
-        // Reload session
+        // Reload session with fresh data
         const sess = sessionStorage.getItem('ssc_session');
         if (sess) {
           const saved = JSON.parse(sess);
@@ -2913,7 +2912,7 @@ function restoreAllData(input) {
           if (fresh) { currentUser = fresh; sessionStorage.setItem('ssc_session', JSON.stringify(fresh)); }
         }
         goPage('home');
-        showToast('Data restored successfully!', 'success');
+        showToast('✅ Restored! Students: ' + db.users.filter(u=>u.role==='student').length + ', Tests: ' + db.tests.length + ', Questions: ' + db.questions.length, 'success');
       }, 'warn');
     } catch(err) {
       showToast('Restore failed: ' + err.message, 'error');
