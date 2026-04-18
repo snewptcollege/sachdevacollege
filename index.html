@@ -773,6 +773,54 @@ async function syncFromSupabase() {
     ]);
     if (usersRes.error || testsRes.error) return false;
 
+    // AUTO-PUSH: If Supabase tables are empty but we have local data, push everything
+    const localRaw = localStorage.getItem(STORE);
+    const localDb = localRaw ? JSON.parse(localRaw) : null;
+    const sbEmpty = (usersRes.data||[]).length === 0;
+
+    if (sbEmpty && localDb && localDb.users && localDb.users.length > 0) {
+      console.log('Supabase empty — auto-pushing local data...');
+      // Push all users
+      for (const u of localDb.users) {
+        try { await sb.from('users').upsert(userToRow(u), {onConflict:'username'}); } catch(e){}
+      }
+      // Push all tests
+      for (const t of (localDb.tests||[])) {
+        try { await sb.from('tests').upsert(testToRow(t), {onConflict:'id'}); } catch(e){}
+      }
+      // Push all questions
+      if ((localDb.questions||[]).length > 0) {
+        try {
+          const qrows = localDb.questions.map(q => questionToRow(q));
+          await sb.from('questions').upsert(qrows, {onConflict:'id'});
+        } catch(e){}
+      }
+      // Push all results
+      for (const r of (localDb.results||[])) {
+        try { await sb.from('results').upsert(resultToRow(r), {onConflict:'id'}); } catch(e){}
+      }
+      // Push subcategories
+      for (const sc of (localDb.subcategories||[])) {
+        try { await sb.from('subcategories').upsert({...sc, category_id: sc.categoryId||sc.category_id}, {onConflict:'id'}); } catch(e){}
+      }
+      console.log('Auto-push complete!');
+      // Re-fetch after push
+      const [u2,t2,q2,r2,s2] = await Promise.all([
+        sb.from('users').select('*'),
+        sb.from('tests').select('*'),
+        sb.from('questions').select('*'),
+        sb.from('results').select('*'),
+        sb.from('subcategories').select('*')
+      ]);
+      db.users = (u2.data||[]).map(rowToUser);
+      db.tests = (t2.data||[]).map(rowToTest);
+      db.questions = (q2.data||[]).map(rowToQuestion);
+      db.results = (r2.data||[]).map(rowToResult);
+      db.subcategories = s2.data||[];
+      localStorage.setItem(STORE, JSON.stringify(db));
+      return true;
+    }
+
     const remoteUsers = (usersRes.data||[]).map(rowToUser);
     db.tests = (testsRes.data||[]).map(rowToTest);
     db.questions = (questionsRes.data||[]).map(rowToQuestion);
@@ -2523,6 +2571,41 @@ function updateSubcatOptions(categoryId, selectId) {
   sel.innerHTML = '<option value="">-- None --</option>' + subcats.map(sc => `<option value="${sc.id}">${sc.name}</option>`).join('');
 }
 
+async function pushAllToSupabase() {
+  const sb = getSB();
+  if (!sb) { showToast('Supabase not connected', 'error'); return; }
+  showLoadingOverlay('Pushing all data to Supabase...');
+  try {
+    // Push all users (except admin role - push admin too)
+    for (const u of db.users) {
+      await sb.from('users').upsert(userToRow(u), {onConflict: 'username'});
+    }
+    // Push all tests
+    for (const t of db.tests) {
+      await sb.from('tests').upsert(testToRow(t), {onConflict: 'id'});
+    }
+    // Push all questions in batches
+    if (db.questions.length) {
+      const qrows = db.questions.map(q => questionToRow(q));
+      await sb.from('questions').upsert(qrows, {onConflict: 'id'});
+    }
+    // Push all results
+    for (const r of db.results) {
+      await sb.from('results').upsert(resultToRow(r), {onConflict: 'id'});
+    }
+    // Push subcategories
+    for (const sc of (db.subcategories||[])) {
+      await sb.from('subcategories').upsert({...sc, category_id: sc.categoryId}, {onConflict: 'id'});
+    }
+    hideLoadingOverlay();
+    showToast('✅ All data pushed to Supabase! Users: ' + db.users.length + ', Tests: ' + db.tests.length + ', Questions: ' + db.questions.length, 'success');
+  } catch(err) {
+    hideLoadingOverlay();
+    showToast('Error: ' + err.message, 'error');
+    console.error(err);
+  }
+}
+
 function buildSubcatListHtml() {
   return EXAM_CATEGORIES.map(cat => {
     const subs = (db.subcategories||[]).filter(sc => sc.categoryId === cat.id);
@@ -3522,6 +3605,7 @@ function renderProfile() {
       <p style="font-size:12px;color:var(--text2);margin-bottom:14px">Always take a backup before updating the platform file. Restore it after to get your data back.</p>
       <div style="display:flex;gap:10px;flex-wrap:wrap">
         <button class="btn btn-primary" onclick="backupAllData()">⬇ Download Backup</button>
+      <button class="btn btn-green" onclick="pushAllToSupabase()" style="margin-top:8px;width:100%">☁ Sync All Data to Cloud</button>
         <label class="btn btn-ghost" style="cursor:pointer;margin:0">
           ⬆ Restore Backup
           <input type="file" accept=".json" onchange="restoreAllData(this)" style="display:none">
