@@ -351,7 +351,7 @@ body{font-family:'Nunito',sans-serif;background:var(--bg);color:var(--text);min-
   .tests-grid{grid-template-columns:1fr}
 }
 </style>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js" defer onerror="console.warn('mammoth.js not loaded - Word import unavailable')"></script>
 </head>
 <body>
 
@@ -542,6 +542,16 @@ body{font-family:'Nunito',sans-serif;background:var(--bg);color:var(--text);min-
 <div class="toast" id="toast"></div>
 
 <script>
+window.addEventListener('DOMContentLoaded', function() {
+  try {
+    init();
+  } catch(e) {
+    console.error('Init error:', e);
+    document.body.innerHTML = '<div style="text-align:center;padding:3rem;font-family:sans-serif"><h2 style="color:#C0392B">Loading Error</h2><p>' + e.message + '</p><button onclick="location.reload()" style="margin-top:1rem;padding:10px 20px;background:#C0392B;color:#fff;border:none;border-radius:8px;cursor:pointer">Retry</button></div>';
+  }
+});
+
+function init() {
 // ═══════════════════════════════════════
 //   DATA STORE
 // ═══════════════════════════════════════
@@ -3242,6 +3252,7 @@ function saveProfilePassword() {
 // ═══════════════════════════════════════
 loadDB();
 checkSession();
+} // end init
 </script>
 </body>
 </html>
