@@ -200,17 +200,17 @@ body{font-family:'Nunito',sans-serif;background:var(--bg);color:var(--text);min-
 .not-attempted-tag{font-size:11px;color:var(--text3);font-weight:600}
 
 /* ══════════════════ TEST INTERFACE ══════════════════ */
-.exam-wrap{display:none;min-height:100vh;background:var(--bg);flex-direction:column}
-.exam-topbar{background:var(--primary);border-bottom:none;padding:.75rem 1.5rem;display:flex;align-items:center;justify-content:space-between;gap:1rem;position:sticky;top:0;z-index:100;box-shadow:0 2px 8px rgba(192,57,43,.25)}
+.exam-wrap{display:none;height:100vh;background:var(--bg);flex-direction:column;overflow:hidden}
+.exam-topbar{background:var(--primary);border-bottom:none;padding:.6rem 1.5rem;display:flex;align-items:center;justify-content:space-between;gap:1rem;flex-shrink:0;z-index:100;box-shadow:0 2px 8px rgba(192,57,43,.25)}
 .exam-title{font-weight:800;font-size:15px;color:#fff}
 .exam-topbar .exam-sub{font-size:11px;color:rgba(255,255,255,.75);margin-top:2px}
-.timer-box{display:flex;align-items:center;gap:8px;background:rgba(255,255,255,.15);border:1.5px solid rgba(255,255,255,.35);border-radius:var(--radius);padding:6px 14px}
+.timer-box{display:flex;align-items:center;gap:8px;background:rgba(255,255,255,.15);border:1.5px solid rgba(255,255,255,.35);border-radius:var(--radius);padding:5px 12px}
 .timer-box.danger{border-color:#fff;background:rgba(255,255,255,.25);animation:pulse .8s infinite}
 @keyframes pulse{0%,100%{opacity:1}50%{opacity:.7}}
-.timer-val{font-family:'JetBrains Mono',monospace;font-size:17px;font-weight:700;color:#fff}
-.exam-body{display:flex;flex:1;gap:0;min-height:0}
-.question-panel{flex:1;padding:1.75rem;overflow-y:auto;min-width:0;background:var(--bg)}
-.sidebar-panel{width:280px;background:var(--surface);border-left:1px solid var(--border);padding:1rem;overflow-y:auto;flex-shrink:0}
+.timer-val{font-family:'JetBrains Mono',monospace;font-size:16px;font-weight:700;color:#fff}
+.exam-body{display:flex;flex:1;min-height:0;overflow:hidden}
+.question-panel{flex:1;padding:1.25rem 1.5rem;overflow-y:auto;min-width:0;background:var(--bg);height:100%}
+.sidebar-panel{width:260px;background:var(--surface);border-left:1px solid var(--border);padding:.75rem;overflow-y:auto;flex-shrink:0;height:100%}
 .q-number{font-size:12px;font-weight:700;color:var(--text3);margin-bottom:8px;text-transform:uppercase;letter-spacing:.05em}
 .q-subject-tag{display:inline-block;font-size:11px;font-weight:700;padding:3px 10px;border-radius:9999px;margin-bottom:14px}
 .q-text{font-size:16px;font-weight:600;line-height:1.7;margin-bottom:1.5rem;color:var(--text)}
@@ -529,7 +529,7 @@ body{font-family:'Nunito',sans-serif;background:var(--bg);color:var(--text);min-
     </div>
     <button class="btn btn-red btn-sm" onclick="confirmSubmitExam()">Submit Test</button>
   </div>
-  <div style="display:flex;flex:1;flex-direction:row;min-height:0">
+  <div class="exam-body">
     <div class="question-panel" id="questionPanel"></div>
     <div class="sidebar-panel" id="palettePanelWrap"></div>
   </div>
@@ -542,16 +542,7 @@ body{font-family:'Nunito',sans-serif;background:var(--bg);color:var(--text);min-
 <div class="toast" id="toast"></div>
 
 <script>
-window.addEventListener('DOMContentLoaded', function() {
-  try {
-    init();
-  } catch(e) {
-    console.error('Init error:', e);
-    document.body.innerHTML = '<div style="text-align:center;padding:3rem;font-family:sans-serif"><h2 style="color:#C0392B">Loading Error</h2><p>' + e.message + '</p><button onclick="location.reload()" style="margin-top:1rem;padding:10px 20px;background:#C0392B;color:#fff;border:none;border-radius:8px;cursor:pointer">Retry</button></div>';
-  }
-});
 
-function init() {
 // ═══════════════════════════════════════
 //   DATA STORE
 // ═══════════════════════════════════════
@@ -1146,6 +1137,7 @@ function startTest(testId) {
   document.getElementById('app').style.display = 'none';
   document.getElementById('examWrap').style.display = 'flex';
   document.getElementById('resultWrap').style.display = 'none';
+  document.body.style.overflow = 'hidden';
   document.getElementById('examTitle').textContent = test.title;
   document.getElementById('examSubInfo').textContent = `${questions.length} Questions · ${test.marks} Marks · -${test.negMarking} Negative Marking`;
 
@@ -1341,6 +1333,7 @@ function submitExam() {
   const resultWrap = document.getElementById('resultWrap');
   if (examWrap) examWrap.style.display = 'none';
   if (resultWrap) { resultWrap.style.display = 'block'; resultWrap.style.visibility = 'visible'; }
+  document.body.style.overflow = '';
   showResult(result);
 }
 
@@ -1430,6 +1423,7 @@ function showResult(result) {
 function backToApp() {
   document.getElementById('resultWrap').style.display = 'none';
   document.getElementById('app').style.display = 'block';
+  document.body.style.overflow = '';
   goPage('home');
 }
 
@@ -3252,7 +3246,6 @@ function saveProfilePassword() {
 // ═══════════════════════════════════════
 loadDB();
 checkSession();
-} // end init
 </script>
 </body>
 </html>
