@@ -1743,17 +1743,19 @@ ${fullText.substring(0, 12000)}`;
 
 function openAddTestModal() {
   window._newTestQuestions = [];
+  // Pre-build option HTML to avoid nested backtick issues
+  const examCatOpts = EXAM_CATEGORIES.map(c => '<option value="'+c.id+'">'+c.icon+' '+c.label+'</option>').join('');
+  const subcatOpts = '<option value="">-- None --</option>' + (db.subcategories||[]).map(sc => '<option value="'+sc.id+'">'+sc.name+'</option>').join('');
+  const subjectOpts = '<option value="All">All Subjects</option>' + SUBJECTS.map(sub => '<option value="'+sub.id+'">'+sub.label+'</option>').join('');
+  const subjectQOpts = SUBJECTS.map(sub => '<option value="'+sub.id+'">'+sub.label+'</option>').join('') + '<option value="__custom__">+ Add custom subject...</option>';
   showModal(`
     <div class="modal-hdr"><h3>Create New Test</h3><button class="close-btn" onclick="closeModal()">×</button></div>
     <div class="form-grid" style="max-height:80vh;overflow-y:auto;padding-right:4px">
       <div class="fg fg-full"><label>Test Title</label><input id="t_title" placeholder="e.g. SSC CGL Full Mock Test 3"></div>
       <div class="fg"><label>Type</label><select id="t_type"><option value="full">Full Mock</option><option value="chapter">Chapter-wise</option><option value="section">Sectional</option></select></div>
-      <div class="fg"><label>Exam Category</label><select id="t_examcat" onchange="updateSubcatOptions(this.value,'t_subcat')">${EXAM_CATEGORIES.map(c=>`<option value="${c.id}">${c.icon} ${c.label}</option>`).join('')}</select></div>
-      <div class="fg"><label>Subcategory <span style="color:var(--text3);font-weight:400">(optional)</span></label><select id="t_subcat">
-        <option value="">-- None --</option>
-        ${(db.subcategories||[]).map(sc=>`<option value="${sc.id}">${sc.name}</option>`).join('')}
-      </select></div>
-      <div class="fg"><label>Subject</label><select id="t_subject"><option value="All">All Subjects</option>${SUBJECTS.map(s=>`<option value="${s.id}">${s.label}</option>`).join('')}</select></div>
+      <div class="fg"><label>Exam Category</label><select id="t_examcat" onchange="updateSubcatOptions(this.value,'t_subcat')">${examCatOpts}</select></div>
+      <div class="fg"><label>Subcategory <span style="color:var(--text3);font-weight:400">(optional)</span></label><select id="t_subcat">${subcatOpts}</select></div>
+      <div class="fg"><label>Subject</label><select id="t_subject">${subjectOpts}</select></div>
       <div class="fg"><label>Duration (minutes)</label><input id="t_duration" type="number" value="60"></div>
       <div class="fg"><label>Total Marks</label><input id="t_marks" type="number" value="200"></div>
       <div class="fg"><label>Negative Marking</label><input id="t_neg" type="number" value="0.5" step="0.25"></div>
@@ -1976,6 +1978,10 @@ function saveNewTest() {
 }
 
 function openEditTestModal(id) {
+  // Pre-build option HTML
+  const _examCatOpts = id => EXAM_CATEGORIES.map(c => '<option value="'+c.id+'" '+(c.id===id?'selected':'')+'>'+c.icon+' '+c.label+'</option>').join('');
+  const _subcatOpts = (catId, selId) => '<option value="">-- None --</option>' + (db.subcategories||[]).filter(sc=>sc.categoryId===catId).map(sc=>'<option value="'+sc.id+'" '+(sc.id===selId?'selected':'')+'>'+sc.name+'</option>').join('');
+  const _subjectOpts = selId => '<option value="All" '+('All'===selId?'selected':'')+'>All Subjects</option>' + SUBJECTS.map(sub=>'<option value="'+sub.id+'" '+(sub.id===selId?'selected':'')+'>'+sub.label+'</option>').join('');
   const t = db.tests.find(x=>x.id===id);
   if (!t) return;
   window._editTestId = id;
@@ -2007,15 +2013,9 @@ function openEditTestModal(id) {
     <div class="form-grid" style="max-height:80vh;overflow-y:auto;padding-right:4px">
       <div class="fg fg-full"><label>Test Title</label><input id="et_title" value="${t.title}"></div>
       <div class="fg"><label>Exam Category</label><select id="et_examcat" onchange="updateSubcatOptions(this.value,'et_subcat')">
-        ${EXAM_CATEGORIES.map(c=>`<option value="${c.id}" ${t.examCategory===c.id?'selected':''}>${c.icon} ${c.label}</option>`).join('')}
-      </select></div>
-      <div class="fg"><label>Subcategory <span style="color:var(--text3);font-weight:400">(optional)</span></label><select id="et_subcat">
-        <option value="">-- None --</option>
-        ${(db.subcategories||[]).filter(sc=>sc.categoryId===t.examCategory).map(sc=>`<option value="${sc.id}" ${t.subcategoryId===sc.id?'selected':''}>${sc.name}</option>`).join('')}
-      </select></div>
-      <div class="fg"><label>Subject</label><select id="et_subject">
-        <option value="All" ${(t.subject||'All')==='All'?'selected':''}>All Subjects</option>
-        ${SUBJECTS.map(sub=>`<option value="${sub.id}" ${t.subject===sub.id?'selected':''}>${sub.label}</option>`).join('')}
+        ${_examCatOpts(t.examCategory)}</select></div>
+      <div class="fg"><label>Subcategory <span style="color:var(--text3);font-weight:400">(optional)</span></label><select id="et_subcat">${_subcatOpts(t.examCategory, t.subcategoryId)}</select></div>
+      <div class="fg"><label>Subject</label><select id="et_subject">${_subjectOpts(t.subject||'All')}
       </select></div>
       <div class="fg"><label>Type</label><select id="et_type">
         <option value="full" ${t.type==='full'?'selected':''}>Full Mock</option>
