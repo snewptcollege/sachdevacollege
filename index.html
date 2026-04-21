@@ -945,27 +945,33 @@ async function syncFromSupabase() {
     }
 
     // Merge: prefer local data for recently saved items (within 30 seconds)
-    const recentlySaved = window._syncBlocked || (window._lastSaveTime && (Date.now() - window._lastSaveTime) < 60000);
-    if (recentlySaved) {
-      // Keep local db.users - only add truly new users from Supabase
-      const localUsernames = new Set(db.users.map(u => u.username));
-      const newRemoteUsers = remoteUsers.filter(u => !localUsernames.has(u.username));
-      db.users = [...db.users, ...newRemoteUsers];
-      // Keep local db.tests - only add truly new tests from Supabase
-      const remoteTests = (testsRes.data||[]).map(rowToTest);
-      const localTestIds = new Set(db.tests.map(t => t.id));
-      const newRemoteTests = remoteTests.filter(t => !localTestIds.has(t.id));
-      db.tests = [...db.tests, ...newRemoteTests];
-      // Keep local questions
-      const remoteQs = (questionsRes.data||[]).map(rowToQuestion);
-      const localQIds = new Set(db.questions.map(q => q.id));
-      db.questions = [...db.questions, ...remoteQs.filter(q => !localQIds.has(q.id))];
-    } else {
-      db.users = remoteUsers;
-      db.tests = (testsRes.data||[]).map(rowToTest);
-      db.questions = (questionsRes.data||[]).map(rowToQuestion);
-      db.results = (resultsRes.data||[]).map(rowToResult);
-    }
+    // SMART MERGE: always keep the version with MORE categories assigned
+    const mergedUsers = remoteUsers.map(remoteU => {
+      const localU = db.users.find(u => u.username === remoteU.username);
+      if (!localU) return remoteU;
+      const localCats = (localU.assignedCategories || []).length;
+      const remoteCats = (remoteU.assignedCategories || []).length;
+      // Keep whichever has more categories - never downgrade a student
+      return localCats >= remoteCats ? localU : remoteU;
+    });
+    // Add local users not yet in Supabase
+    const remoteUsernames = new Set(remoteUsers.map(u => u.username));
+    const localOnlyUsers = db.users.filter(u => !remoteUsernames.has(u.username));
+    db.users = [...mergedUsers, ...localOnlyUsers];
+
+    // For tests/questions: always take the larger set
+    const remoteTests = (testsRes.data||[]).map(rowToTest);
+    const localTestIds = new Set(db.tests.map(t => t.id));
+    const newRemoteTests = remoteTests.filter(t => !localTestIds.has(t.id));
+    db.tests = [...db.tests, ...newRemoteTests];
+
+    const remoteQs = (questionsRes.data||[]).map(rowToQuestion);
+    const localQIds = new Set(db.questions.map(q => q.id));
+    db.questions = [...db.questions, ...remoteQs.filter(q => !localQIds.has(q.id))];
+
+    const remoteResults = (resultsRes.data||[]).map(rowToResult);
+    const localResultIds = new Set(db.results.map(r => r.id));
+    db.results = [...db.results, ...remoteResults.filter(r => !localResultIds.has(r.id))];
     // Save to localStorage as cache
     localStorage.setItem(STORE, JSON.stringify(db));
     loadExamCategories();
@@ -1368,20 +1374,32 @@ function goPage(p, skipHistory) {
     // Render immediately from local cache
     mc.innerHTML = renderStudentsAdmin();
     updatePendingBadge();
-    // Then fetch fresh data from Supabase in background (only if no recent save)
+    // Background fetch: only runs if not recently saved AND not blocked
     const _timeSinceSave = Date.now() - (window._lastSaveTime || 0);
-    if (_timeSinceSave > 5000 && !window._syncBlocked) {
+    if (_timeSinceSave > 30000 && !window._syncBlocked) {
       const _sb2 = getSB();
       if (_sb2) {
         _sb2.from('users').select('*').then(res => {
           if (!res.error && res.data && res.data.length > 0) {
+            // SMART MERGE: never downgrade a student who has categories in local db
             const remoteUsers = res.data.map(rowToUser);
-            const admin = db.users.find(u => u.role === 'admin');
-            db.users = admin ? [admin, ...remoteUsers.filter(u => u.role !== 'admin')] : remoteUsers;
-            saveDB();
-            // Re-render with fresh data
+            const merged = remoteUsers.map(remoteU => {
+              const localU = db.users.find(u => u.username === remoteU.username);
+              if (!localU) return remoteU;
+              // Keep whichever has MORE categories assigned (never lose assignments)
+              const localCats = (localU.assignedCategories || []).length;
+              const remoteCats = (remoteU.assignedCategories || []).length;
+              return localCats >= remoteCats ? localU : remoteU;
+            });
+            // Add any local users not in remote
+            const remoteUsernames = new Set(remoteUsers.map(u => u.username));
+            const localOnly = db.users.filter(u => !remoteUsernames.has(u.username));
+            db.users = [...merged, ...localOnly];
+            // Save without triggering sync block
+            try { localStorage.setItem(STORE, JSON.stringify(db)); } catch(e) {}
+            // Re-render only if still on this page
             const mc2 = document.getElementById('pageContent');
-            if (mc2 && window._currentPage === 'students-admin') {
+            if (mc2 && currentPage === 'students-admin') {
               mc2.innerHTML = renderStudentsAdmin();
               updatePendingBadge();
             }
@@ -3813,17 +3831,17 @@ checkSession();
 //   AUTO-SYNC TO SUPABASE
 // ═══════════════════════════════════════
 
-// Sync every 5 minutes while logged in
+// Sync every 5 minutes while logged in - PUSH only (never pull/overwrite)
 setInterval(function() {
   if (!currentUser) return;
   const sb = getSB();
   if (!sb) return;
+  // Only PUSH local data to Supabase, never pull (to avoid overwriting category assignments)
   db.users.forEach(u => { try { sbUpsert('users', userToRow(u)); } catch(e){} });
   db.tests.forEach(t => { try { sbUpsert('tests', testToRow(t)); } catch(e){} });
   if (db.questions && db.questions.length) {
     try { sbUpsert('questions', db.questions.map(q => questionToRow(q))); } catch(e){}
   }
-  saveDB();
 }, 5 * 60 * 1000);
 
 // Sync when user returns to the tab (visibility change)
