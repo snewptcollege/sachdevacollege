@@ -855,9 +855,6 @@ async function syncFromSupabase() {
     }
 
     const remoteUsers = (usersRes.data||[]).map(rowToUser);
-    db.tests = (testsRes.data||[]).map(rowToTest);
-    db.questions = (questionsRes.data||[]).map(rowToQuestion);
-    db.results = (resultsRes.data||[]).map(rowToResult);
     // Restore custom exam categories from special Supabase records
     const allSubcats = subcatsRes.data || [];
     const customCats = allSubcats.filter(sc => sc.category_id === '__EXAMCAT__');
@@ -943,15 +940,27 @@ async function syncFromSupabase() {
       }
     }
 
-    // Merge: prefer local data for recently saved users (within 30 seconds)
-    const recentlySaved = (window._lastSaveTime && (Date.now() - window._lastSaveTime) < 30000);
+    // Merge: prefer local data for recently saved items (within 30 seconds)
+    const recentlySaved = window._syncBlocked || (window._lastSaveTime && (Date.now() - window._lastSaveTime) < 60000);
     if (recentlySaved) {
-      // Keep local db.users as-is, only add new users from Supabase not in local
+      // Keep local db.users - only add truly new users from Supabase
       const localUsernames = new Set(db.users.map(u => u.username));
       const newRemoteUsers = remoteUsers.filter(u => !localUsernames.has(u.username));
       db.users = [...db.users, ...newRemoteUsers];
+      // Keep local db.tests - only add truly new tests from Supabase
+      const remoteTests = (testsRes.data||[]).map(rowToTest);
+      const localTestIds = new Set(db.tests.map(t => t.id));
+      const newRemoteTests = remoteTests.filter(t => !localTestIds.has(t.id));
+      db.tests = [...db.tests, ...newRemoteTests];
+      // Keep local questions
+      const remoteQs = (questionsRes.data||[]).map(rowToQuestion);
+      const localQIds = new Set(db.questions.map(q => q.id));
+      db.questions = [...db.questions, ...remoteQs.filter(q => !localQIds.has(q.id))];
     } else {
       db.users = remoteUsers;
+      db.tests = (testsRes.data||[]).map(rowToTest);
+      db.questions = (questionsRes.data||[]).map(rowToQuestion);
+      db.results = (resultsRes.data||[]).map(rowToResult);
     }
     // Save to localStorage as cache
     localStorage.setItem(STORE, JSON.stringify(db));
@@ -1074,16 +1083,30 @@ function loadDB() {
     localStorage.setItem(STORE, JSON.stringify(db));
   }
   loadExamCategories();
+  // Restore last save time from localStorage so sync respects recent saves after refresh
+  const savedTime = localStorage.getItem('myelearner_last_save');
+  if (savedTime) {
+    window._lastSaveTime = parseInt(savedTime);
+    // If saved within last 60 seconds, block sync immediately on load
+    if (Date.now() - window._lastSaveTime < 60000) {
+      window._syncBlocked = true;
+      clearTimeout(window._syncBlockTimer);
+      window._syncBlockTimer = setTimeout(() => { window._syncBlocked = false; }, 60000 - (Date.now() - window._lastSaveTime));
+    }
+  }
 }
 
 function saveDB() {
   try { localStorage.setItem(STORE, JSON.stringify(db)); } catch(e) {}
   loadExamCategories();
-  window._lastSaveTime = Date.now();
-  // Block background syncs for 10 seconds after any save
+  const now = Date.now();
+  window._lastSaveTime = now;
+  // Persist save time to localStorage so it survives page refresh
+  try { localStorage.setItem('myelearner_last_save', String(now)); } catch(e) {}
+  // Block background syncs for 15 seconds after any save
   window._syncBlocked = true;
   clearTimeout(window._syncBlockTimer);
-  window._syncBlockTimer = setTimeout(() => { window._syncBlocked = false; }, 10000);
+  window._syncBlockTimer = setTimeout(() => { window._syncBlocked = false; }, 15000);
 }
 
 // Full sync from Supabase — called on login
@@ -1621,6 +1644,11 @@ function startTest(testId) {
     if (test.published !== true) { showToast('This test is not available.', 'error'); return; }
     const allowed = currentUser.assignedCategories || [];
     if (!allowed.includes(test.examCategory)) { showToast('You are not assigned to this exam category.', 'error'); return; }
+    // Check subcategory lock
+    const allowedSubs = currentUser.assignedSubcategories || [];
+    if (allowedSubs.length > 0 && test.subcategoryId && !allowedSubs.includes(test.subcategoryId)) {
+      showToast('You are not assigned to this subcategory.', 'error'); return;
+    }
     // Block reattempt - students can only attempt each test once
     const alreadyAttempted = db.results.some(r => r.testId === test.id && r.username === currentUser.username);
     if (alreadyAttempted) { showToast('You have already attempted this test. Reattempt is not allowed.', 'error'); return; }
@@ -2486,7 +2514,9 @@ function saveNewTest() {
   window._newTestQuestions = [];
   saveDB();
   pushTestToSupabase(newTest);
-  pushQuestionsToSupabase(newQuestions);
+  // Push all questions that were added to this test
+  const newQs = db.questions.filter(q => questionIds.includes(q.id));
+  pushQuestionsToSupabase(newQs);
   closeModal(); goPage('admin');
   showToast('Test created with ' + questionIds.length + ' questions!', 'success');
 }
@@ -2666,7 +2696,7 @@ function saveEditTest(id) {
     negMarking: parseFloat(gV('et_neg'))||0.5
   };
   saveDB(); closeModal(); goPage('admin');
-  pushTestToSupabase(updatedTest);
+  pushTestToSupabase(db.tests[idx]);
   showToast('Test updated!', 'success');
 }
 
@@ -3226,8 +3256,8 @@ function openEditStudentModal(username) {
     const subcats = (db.subcategories||[]).filter(sc=>sc.categoryId===c.id);
     const catChecked = assigned.includes(c.id);
     const subsHtml = subcats.length === 0
-      ? '<div style="font-size:12px;color:var(--text3)">All tests in this category will be accessible</div>'
-      : '<div style="font-size:11px;color:var(--text2);margin-bottom:6px;font-weight:600">Select subcategories (leave all unchecked = access all):</div>'
+      ? '<div style="font-size:12px;color:var(--text3)">No subcategories created — all tests in this category will be accessible</div>'
+      : '<div style="font-size:11px;color:var(--text2);margin-bottom:6px;font-weight:600">🔒 Restrict to subcategories (uncheck = all unlocked):</div>'
         + subcats.map(sc =>
             '<label style="display:flex;align-items:center;gap:8px;padding:4px 0;cursor:pointer">'
             + '<input type="checkbox" id="es_sub_'+sc.id+'" value="'+sc.id+'" '+(assignedSubs.includes(sc.id)?'checked':'')+' style="accent-color:'+c.color+';width:14px;height:14px">'
@@ -3250,7 +3280,7 @@ function openEditStudentModal(username) {
     + '<div class="fg"><label>Email</label><input id="es_email" value="'+(u.email||u.username)+'"></div>'
     + '<div class="fg"><label>Phone</label><input id="es_phone" value="'+(u.phone||'')+'" maxlength="10"></div>'
     + '<div class="fg fg-full"><label>Assign Exam Access</label><div style="margin-top:8px">'+catHtml+'</div>'
-    + '<div style="font-size:11px;color:var(--text3);margin-top:4px">💡 Check a category to grant access.</div></div>'
+    + '<div style="font-size:11px;color:var(--text3);margin-top:4px">💡 Check a category → then check specific subcategories to restrict access. If no subcategory is checked, student gets all tests in that category.</div></div>'
     + '</div>'
     + '<div id="es_err" style="color:var(--red);font-size:12px;display:none;margin:8px 0"></div>'
     + '<div class="form-actions">'
