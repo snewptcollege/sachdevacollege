@@ -1606,7 +1606,7 @@ function renderTests() {
   function buildSection(cat, catTests) {
     const catLocked = !isAdmin && !allowedCats.includes(cat.id);
     const allowedSubs = currentUser.assignedSubcategories || [];
-    const subcats = (db.subcategories||[]).filter(sc => sc.categoryId === cat.id);
+    const subcats = (db.subcategories||[]).filter(sc => (sc.categoryId||sc.category_id) === cat.id);
     const badge = isAdmin ? '' : catLocked
       ? '<span style="font-size:11px;font-weight:700;color:var(--amber);background:var(--amber-bg);padding:4px 12px;border-radius:9999px;border:1px solid var(--amber-light)">🔒 Locked</span>'
       : '<span style="font-size:11px;font-weight:700;color:var(--green);background:var(--green-bg);padding:4px 12px;border-radius:9999px;border:1px solid var(--green-light)">✓ Unlocked</span>';
@@ -2548,7 +2548,7 @@ function saveNewTest() {
 function openEditTestModal(id) {
   // Pre-build option HTML
   const _examCatOpts = id => EXAM_CATEGORIES.map(c => '<option value="'+c.id+'" '+(c.id===id?'selected':'')+'>'+c.icon+' '+c.label+'</option>').join('');
-  const _subcatOpts = (catId, selId) => '<option value="">-- None --</option>' + (db.subcategories||[]).filter(sc=>sc.categoryId===catId).map(sc=>'<option value="'+sc.id+'" '+(sc.id===selId?'selected':'')+'>'+sc.name+'</option>').join('');
+  const _subcatOpts = (catId, selId) => '<option value="">-- None --</option>' + (db.subcategories||[]).filter(sc=>(sc.categoryId||sc.category_id)===catId).map(sc=>'<option value="'+sc.id+'" '+(sc.id===selId?'selected':'')+'>'+sc.name+'</option>').join('');
   const _subjectOpts = selId => '<option value="All" '+('All'===selId?'selected':'')+'>All Subjects</option>' + SUBJECTS.map(sub=>'<option value="'+sub.id+'" '+(sub.id===selId?'selected':'')+'>'+sub.label+'</option>').join('');
   const t = db.tests.find(x=>x.id===id);
   if (!t) return;
@@ -2736,7 +2736,7 @@ function deleteTest(id) {
 function updateSubcatOptions(categoryId, selectId) {
   const sel = document.getElementById(selectId);
   if (!sel) return;
-  const subcats = (db.subcategories||[]).filter(sc => sc.categoryId === categoryId);
+  const subcats = (db.subcategories||[]).filter(sc => (sc.categoryId||sc.category_id) === categoryId);
   sel.innerHTML = '<option value="">-- None --</option>' + subcats.map(sc => `<option value="${sc.id}">${sc.name}</option>`).join('');
 }
 
@@ -2799,7 +2799,7 @@ async function pushAllToSupabase() {
 function buildSubcatListHtml() {
   const defaultIds = DEFAULT_EXAM_CATEGORIES.map(c => c.id);
   return EXAM_CATEGORIES.map(cat => {
-    const subs = (db.subcategories||[]).filter(sc => sc.categoryId === cat.id);
+    const subs = (db.subcategories||[]).filter(sc => (sc.categoryId||sc.category_id) === cat.id);
     const isCustom = !defaultIds.includes(cat.id);
     const subsHtml = subs.length === 0
       ? '<div style="font-size:12px;color:var(--text3);padding:6px 14px">No subcategories yet</div>'
@@ -2923,7 +2923,7 @@ function deleteCategoryModal(catId) {
     function() {
       EXAM_CATEGORIES = EXAM_CATEGORIES.filter(c => c.id !== catId);
       db.examCategories = EXAM_CATEGORIES;
-      db.subcategories = db.subcategories.filter(sc => sc.categoryId !== catId);
+      db.subcategories = db.subcategories.filter(sc => (sc.categoryId||sc.category_id) !== catId);
       saveDB();
       sbDelete('subcategories', 'id', 'CAT_'+catId);
       showToast('Category deleted.', 'warn');
@@ -3276,8 +3276,13 @@ function openEditStudentModal(username) {
   if (!u) return;
   const assigned = u.assignedCategories || [];
   const assignedSubs = u.assignedSubcategories || [];
+  // Normalize subcategories to ensure categoryId is always set
+  const _normalizedSubcats = (db.subcategories||[]).map(sc => ({
+    ...sc,
+    categoryId: sc.categoryId || sc.category_id || ''
+  }));
   const catHtml = EXAM_CATEGORIES.map(c => {
-    const subcats = (db.subcategories||[]).filter(sc=>sc.categoryId===c.id);
+    const subcats = _normalizedSubcats.filter(sc=>sc.categoryId===c.id);
     const catChecked = assigned.includes(c.id);
     const subsHtml = subcats.length === 0
       ? '<div style="font-size:12px;color:var(--text3)">No subcategories created — all tests in this category will be accessible</div>'
@@ -3552,7 +3557,7 @@ function restoreAllData(input) {
         db.tests         = backup.tests         || [];
         db.questions     = backup.questions     || [];
         db.results       = backup.results       || [];
-        db.subcategories = backup.subcategories || [];
+        db.subcategories = (backup.subcategories || []).map(sc => ({...sc, categoryId: sc.categoryId||sc.category_id, category_id: sc.category_id||sc.categoryId}));
         db.examCategories = backup.examCategories || [...DEFAULT_EXAM_CATEGORIES];
         const adminIdx = db.users.findIndex(u=>u.role==='admin');
         if (adminIdx<0) db.users.unshift(DEFAULT_USERS.find(u=>u.role==='admin'));
