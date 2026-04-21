@@ -1420,6 +1420,11 @@ function goPage(p, skipHistory) {
     // Render immediately from local cache
     mc.innerHTML = renderStudentsAdmin();
     updatePendingBadge();
+    // Quietly push all subcategories to Supabase to ensure live site has them
+    const _sbSync = getSB();
+    if (_sbSync && db.subcategories && db.subcategories.length > 0) {
+      db.subcategories.forEach(sc => { try { sbUpsert('subcategories', subcatToRow(sc)); } catch(e){} });
+    }
     // Background fetch: only runs if not recently saved AND not blocked
     const _timeSinceSave = Date.now() - (window._lastSaveTime || 0);
     if (_timeSinceSave > 30000 && !window._syncBlocked) {
@@ -3437,13 +3442,25 @@ function openEditStudentModal(username) {
     );
   }; // end _openModal
 
-  // Fetch fresh subcategories from Supabase
+  // First push local subcats to Supabase (fixes any missing/corrupt data)
+  const _localSubcats = (db.subcategories || []).filter(sc => sc.id && sc.name);
+  _localSubcats.forEach(sc => sbUpsert('subcategories', subcatToRow(sc)));
+
+  // Then fetch fresh from Supabase and merge with local
   if (_sb) {
     _sb.from('subcategories').select('*').then(res => {
-      if (!res.error && res.data && res.data.length > 0) {
-        const regular = res.data.filter(sc => sc.category_id !== '__EXAMCAT__');
-        db.subcategories = regular.map(normalizeSubcat);
-        try { localStorage.setItem(STORE, JSON.stringify(db)); } catch(e) {}
+      if (!res.error && res.data) {
+        const remoteRegular = res.data
+          .filter(sc => sc.category_id !== '__EXAMCAT__' && sc.category_id)
+          .map(normalizeSubcat);
+        // Merge: combine remote + local, preferring remote for existing IDs
+        const remoteIds = new Set(remoteRegular.map(sc => sc.id));
+        const localOnly = _localSubcats.filter(sc => !remoteIds.has(sc.id)).map(normalizeSubcat);
+        const merged = [...remoteRegular, ...localOnly];
+        if (merged.length > 0) {
+          db.subcategories = merged;
+          try { localStorage.setItem(STORE, JSON.stringify(db)); } catch(e) {}
+        }
       }
       _openModal();
     }).catch(() => _openModal());
