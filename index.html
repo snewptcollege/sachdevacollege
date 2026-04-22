@@ -1104,9 +1104,6 @@ function pushTestToSupabase(test) {
   sbUpsert('tests', testToRow(test));
 }
 
-function deleteTestFromSupabase(id) {
-  sbDelete('tests', 'id', id);
-}
 
 function pushQuestionsToSupabase(questions) {
   if (!questions || !questions.length) return;
@@ -1120,10 +1117,6 @@ function pushResultToSupabase(result) {
 
 function pushSubcatToSupabase(sc) {
   sbUpsert('subcategories', subcatToRow(sc));
-}
-
-function deleteSubcatFromSupabase(id) {
-  sbDelete('subcategories', 'id', id);
 }
 
 
@@ -2197,23 +2190,34 @@ function checkSession() {
   const raw = sessionStorage.getItem('ssc_session');
   if (raw) {
     const saved = JSON.parse(raw);
-    // Always load fresh data from db so assignedCategories etc are up to date
-    const fresh = db.users.find(u => u.username === saved.username && u.password === saved.password);
-    if (!fresh || fresh.suspended) { sessionStorage.removeItem('ssc_session'); return; }
-    currentUser = fresh;
-    // Update session with fresh data
-    sessionStorage.setItem('ssc_session', JSON.stringify(fresh));
-    document.getElementById('loginWrap').style.display = 'none';
-    document.getElementById('app').style.display = 'block';
-    document.getElementById('userChipName').textContent = currentUser.name.split(' ')[0];
-    document.getElementById('userAv').textContent = currentUser.name[0].toUpperCase();
-    if (currentUser.role === 'admin') {
-      showAdminUI();
-    } else {
-      showStudentUI();
-    }
-    updatePendingBadge();
-    goPage('home');
+    showLoadingOverlay('Loading your account...');
+    syncFromSupabase().then(() => {
+      hideLoadingOverlay();
+      const fresh = db.users.find(u => u.username === saved.username && u.password === saved.password);
+      if (!fresh || fresh.suspended) { sessionStorage.removeItem('ssc_session'); return; }
+      currentUser = fresh;
+      sessionStorage.setItem('ssc_session', JSON.stringify(fresh));
+      document.getElementById('loginWrap').style.display = 'none';
+      document.getElementById('app').style.display = 'block';
+      document.getElementById('userChipName').textContent = currentUser.name.split(' ')[0];
+      document.getElementById('userAv').textContent = currentUser.name[0].toUpperCase();
+      if (currentUser.role === 'admin') showAdminUI(); else showStudentUI();
+      updatePendingBadge();
+      goPage('home');
+    }).catch(() => {
+      hideLoadingOverlay();
+      const fresh = db.users.find(u => u.username === saved.username && u.password === saved.password);
+      if (!fresh || fresh.suspended) { sessionStorage.removeItem('ssc_session'); return; }
+      currentUser = fresh;
+      sessionStorage.setItem('ssc_session', JSON.stringify(fresh));
+      document.getElementById('loginWrap').style.display = 'none';
+      document.getElementById('app').style.display = 'block';
+      document.getElementById('userChipName').textContent = currentUser.name.split(' ')[0];
+      document.getElementById('userAv').textContent = currentUser.name[0].toUpperCase();
+      if (currentUser.role === 'admin') showAdminUI(); else showStudentUI();
+      updatePendingBadge();
+      goPage('home');
+    });
   }
 }
 
@@ -2227,6 +2231,12 @@ function doLogin() {
   showLoadingOverlay('Connecting...');
   syncFromSupabase().then(() => {
     hideLoadingOverlay();
+    // Push subcategories to Supabase on login to fix any missing data
+    if (db.subcategories && db.subcategories.length > 0) {
+      db.subcategories.forEach(sc => { try { sbUpsert('subcategories', subcatToRow(sc)); } catch(e){} });
+    }
+    // Push all students to ensure assignedCategories are synced
+    db.users.forEach(u => { if (u.role === 'student') { try { sbUpsert('users', userToRow(u)); } catch(e){} } });
     const user = db.users.find(x =>
       (x.username === raw || (x.email && x.email.toLowerCase() === raw)) &&
       x.password === p && x.role === loginTab
@@ -2371,18 +2381,34 @@ function goPage(p, skipHistory) {
   else if (p === 'admin')          mc.innerHTML = renderAdmin();
   else if (p === 'questions')      mc.innerHTML = renderQuestions();
   else if (p === 'students-admin') {
-    const _sb = getSB();
-    if (_sb) {
-      _sb.from('users').select('*').then(res => {
-        if (!res.error && res.data) {
-          const remoteUsers = res.data.map(rowToUser);
-          const admin = db.users.find(u => u.role === 'admin');
-          db.users = admin ? [admin, ...remoteUsers.filter(u => u.role !== 'admin')] : remoteUsers;
-          saveDB(); updatePendingBadge();
-        }
-        mc.innerHTML = renderStudentsAdmin();
-      }).catch(() => { mc.innerHTML = renderStudentsAdmin(); });
-    } else { mc.innerHTML = renderStudentsAdmin(); }
+    mc.innerHTML = renderStudentsAdmin();
+    updatePendingBadge();
+    // Push subcategories silently
+    const _sbSync = getSB();
+    if (_sbSync && db.subcategories && db.subcategories.length > 0) {
+      db.subcategories.forEach(sc => { try { sbUpsert('subcategories', subcatToRow(sc)); } catch(e){} });
+    }
+    // Background fetch: only if no recent save
+    const _timeSinceSave = Date.now() - (window._lastSaveTime || 0);
+    if (_timeSinceSave > 30000 && !window._syncBlocked) {
+      const _sb2 = getSB();
+      if (_sb2) {
+        _sb2.from('users').select('*').then(res => {
+          if (!res.error && res.data && res.data.length > 0) {
+            const remoteUsers = res.data.map(rowToUser);
+            const merged = remoteUsers.map(ru => {
+              const lu = db.users.find(u => u.username === ru.username);
+              if (!lu) return ru;
+              return (lu.assignedCategories||[]).length >= (ru.assignedCategories||[]).length ? lu : ru;
+            });
+            db.users = [...merged, ...db.users.filter(u => !new Set(remoteUsers.map(x=>x.username)).has(u.username))];
+            try { localStorage.setItem(STORE, JSON.stringify(db)); } catch(e) {}
+            const mc2 = document.getElementById('pageContent');
+            if (mc2 && currentPage === 'students-admin') { mc2.innerHTML = renderStudentsAdmin(); updatePendingBadge(); }
+          }
+        }).catch(() => {});
+      }
+    }
     return;
   }
   else if (p === 'profile')        mc.innerHTML = renderProfile();
@@ -2495,7 +2521,13 @@ function renderHome() {
 
 function renderTests() {
   const isAdmin = currentUser && currentUser.role === 'admin';
-  const allowedCats = currentUser.assignedCategories || [];
+  // Always get fresh assignedCategories from db
+  const _freshUser = db.users.find(u => u.username === currentUser.username) || currentUser;
+  const allowedCats = _freshUser.assignedCategories || [];
+  if (_freshUser !== currentUser) {
+    currentUser.assignedCategories = _freshUser.assignedCategories;
+    currentUser.assignedSubcategories = _freshUser.assignedSubcategories;
+  }
   const visibleTests = isAdmin
     ? db.tests
     : db.tests.filter(t => t.published === true || t.published === 'true');
@@ -2543,7 +2575,7 @@ function renderTests() {
 
   function buildSection(cat, catTests) {
     const catLocked = !isAdmin && !allowedCats.includes(cat.id);
-    const allowedSubs = currentUser.assignedSubcategories || [];
+    const allowedSubs = (_freshUser || currentUser).assignedSubcategories || [];
     const subcats = (db.subcategories||[]).filter(sc => sc.categoryId === cat.id);
     const badge = isAdmin ? '' : catLocked
       ? '<span style="font-size:11px;font-weight:700;color:var(--amber);background:var(--amber-bg);padding:4px 12px;border-radius:9999px;border:1px solid var(--amber-light)">🔒 Locked</span>'
@@ -2744,8 +2776,12 @@ function startTest(testId) {
   const test = db.tests.find(t => t.id === testId);
   if (!test) return;
   if (currentUser.role !== 'admin') {
-    if (test.published !== true) { showToast('This test is not available.', 'error'); return; }
-    const allowed = currentUser.assignedCategories || [];
+    if (test.published !== true && test.published !== 'true') { showToast('This test is not available.', 'error'); return; }
+    // Get fresh user data to ensure latest category assignments
+    const _su = db.users.find(u => u.username === currentUser.username) || currentUser;
+    currentUser.assignedCategories = _su.assignedCategories || [];
+    currentUser.assignedSubcategories = _su.assignedSubcategories || [];
+    const allowed = currentUser.assignedCategories;
     if (!allowed.includes(test.examCategory)) { showToast('You are not assigned to this exam category.', 'error'); return; }
     // Block reattempt - students can only attempt each test once
     const alreadyAttempted = db.results.some(r => r.testId === test.id && r.username === currentUser.username);
