@@ -656,6 +656,31 @@ function sbDelete(table, field, value) {
   return sbRequest('DELETE', table, null, field + '=eq.' + encodeURIComponent(value));
 }
 
+// XHR-based SELECT - avoids DataCloneError on GitHub Pages
+function sbSelect(table, filter) {
+  return new Promise(function(resolve) {
+    try {
+      const xhr = new XMLHttpRequest();
+      let url = SUPABASE_URL + '/rest/v1/' + table;
+      if (filter) url += '?' + filter;
+      xhr.open('GET', url, true);
+      xhr.setRequestHeader('apikey', SUPABASE_KEY);
+      xhr.setRequestHeader('Authorization', 'Bearer ' + SUPABASE_KEY);
+      xhr.setRequestHeader('Accept', 'application/json');
+      xhr.onload = function() {
+        if (xhr.status < 300) {
+          try { resolve({ data: JSON.parse(xhr.responseText), error: null }); }
+          catch(e) { resolve({ data: [], error: e }); }
+        } else {
+          resolve({ data: [], error: { message: xhr.statusText } });
+        }
+      };
+      xhr.onerror = function() { resolve({ data: [], error: { message: 'Network error' } }); };
+      xhr.send();
+    } catch(e) { resolve({ data: [], error: e }); }
+  });
+}
+
 // Convert db user object to Supabase row
 function subcatToRow(sc) {
   return {
@@ -914,15 +939,13 @@ async function syncDB() {
 //   SUPABASE SYNC FUNCTIONS
 // ═══════════════════════════════════════
 async function syncFromSupabase() {
-  const sb = getSB();
-  if (!sb) return false;
   try {
     const [usersRes, testsRes, questionsRes, resultsRes, subcatsRes] = await Promise.all([
-      sb.from('users').select('*'),
-      sb.from('tests').select('*'),
-      sb.from('questions').select('*'),
-      sb.from('results').select('*'),
-      sb.from('subcategories').select('*')
+      sbSelect('users', null),
+      sbSelect('tests', null),
+      sbSelect('questions', null),
+      sbSelect('results', null),
+      sbSelect('subcategories', null)
     ]);
     if (usersRes.error || testsRes.error) return false;
 
@@ -939,25 +962,25 @@ async function syncFromSupabase() {
         if (localDb.users && localDb.users.length > 1) {
           console.log('Supabase empty — pushing local data to Supabase...');
           for (const u of localDb.users) {
-            try { await sb.from('users').upsert(userToRow(u), {onConflict:'username'}); } catch(e){}
+            try { await sbUpsert('users', userToRow(u)); } catch(e){}
           }
           for (const t of (localDb.tests||[])) {
-            try { await sb.from('tests').upsert(testToRow(t), {onConflict:'id'}); } catch(e){}
+            try { await sbUpsert('tests', testToRow(t)); } catch(e){}
           }
           if ((localDb.questions||[]).length > 0) {
-            try { await sb.from('questions').upsert(localDb.questions.map(q=>questionToRow(q)), {onConflict:'id'}); } catch(e){}
+            try { await sbUpsert('questions', localDb.questions.map(q=>questionToRow(q))); } catch(e){}
           }
           for (const r of (localDb.results||[])) {
-            try { await sb.from('results').upsert(resultToRow(r), {onConflict:'id'}); } catch(e){}
+            try { await sbUpsert('results', resultToRow(r)); } catch(e){}
           }
           for (const sc of (localDb.subcategories||[])) {
-            try { await sb.from('subcategories').upsert(subcatToRow(sc), {onConflict:'id'}); } catch(e){}
+            try { await sbUpsert('subcategories', subcatToRow(sc)); } catch(e){}
           }
           // Re-fetch after push
           const [u2,t2,q2,r2,s2] = await Promise.all([
-            sb.from('users').select('*'), sb.from('tests').select('*'),
-            sb.from('questions').select('*'), sb.from('results').select('*'),
-            sb.from('subcategories').select('*')
+            sbSelect('users', null), sbSelect('tests', null),
+            sbSelect('questions', null), sbSelect('results', null),
+            sbSelect('subcategories', null)
           ]);
           db.users      = (u2.data||[]).map(rowToUser);
           db.tests      = (t2.data||[]).map(rowToTest);
@@ -1061,50 +1084,40 @@ async function syncFromSupabase() {
 
 
 async function pushAllToSupabase() {
-  const sb = getSB();
-  if (!sb) { showToast('Supabase not connected', 'error'); return; }
   showLoadingOverlay('Pushing all data to Supabase...');
   try {
     // Push all users (except admin role - push admin too)
     for (const u of db.users) {
-      await sb.from('users').upsert(userToRow(u), {onConflict: 'username'});
+      await sbUpsert('users', userToRow(u));
     }
     // Push all tests
     for (const t of db.tests) {
-      await sb.from('tests').upsert(testToRow(t), {onConflict: 'id'});
+      await sbUpsert('tests', testToRow(t));
     }
     // Push all questions in batches
     if (db.questions.length) {
       const qrows = db.questions.map(q => questionToRow(q));
-      await sb.from('questions').upsert(qrows, {onConflict: 'id'});
+      await sbUpsert('questions', qrows);
     }
     // Push all results
     for (const r of db.results) {
-      await sb.from('results').upsert(resultToRow(r), {onConflict: 'id'});
+      await sbUpsert('results', resultToRow(r));
     }
     // Push subcategories
     for (const sc of (db.subcategories||[])) {
-      await sb.from('subcategories').upsert(subcatToRow(sc), {onConflict: 'id'});
+      await sbUpsert('subcategories', subcatToRow(sc));
     }
     // Push custom exam categories as special records
     const defaultIds = DEFAULT_EXAM_CATEGORIES.map(c => c.id);
     const customCats = EXAM_CATEGORIES.filter(c => !defaultIds.includes(c.id));
     for (const cat of customCats) {
-      await sb.from('subcategories').upsert({
-        id: 'CAT_' + cat.id,
-        category_id: '__EXAMCAT__',
-        name: JSON.stringify(cat)
-      }, {onConflict: 'id'});
+      await sbUpsert('subcategories', {id:'CAT_'+cat.id, category_id:'__EXAMCAT__', name:JSON.stringify(cat)});
     }
     // Also push edited default categories (label/icon/desc changes)
     for (const cat of EXAM_CATEGORIES.filter(c => defaultIds.includes(c.id))) {
       const defaultCat = DEFAULT_EXAM_CATEGORIES.find(d => d.id === cat.id);
       if (defaultCat && (cat.label !== defaultCat.label || cat.icon !== defaultCat.icon || cat.desc !== defaultCat.desc)) {
-        await sb.from('subcategories').upsert({
-          id: 'CAT_' + cat.id,
-          category_id: '__EXAMCAT__',
-          name: JSON.stringify(cat)
-        }, {onConflict: 'id'});
+        await sbUpsert('subcategories', {id:'CAT_'+cat.id, category_id:'__EXAMCAT__', name:JSON.stringify(cat)});
       }
     }
     hideLoadingOverlay();
@@ -1596,7 +1609,6 @@ function openEditStudentModal(username) {
   if (!u) return;
 
   // Fetch fresh subcategories from Supabase before opening modal
-  const _sb = getSB();
   const _openModal = function() {
     const assigned = u.assignedCategories || [];
     const assignedSubs = u.assignedSubcategories || [];
@@ -1645,8 +1657,8 @@ function openEditStudentModal(username) {
   _localSubcats.forEach(sc => sbUpsert('subcategories', subcatToRow(sc)));
 
   // Then fetch fresh from Supabase and merge with local
-  if (_sb) {
-    _sb.from('subcategories').select('*').then(res => {
+  {
+    sbSelect('subcategories', null).then(res => {
       if (!res.error && res.data) {
         const remoteRegular = res.data
           .filter(sc => sc.category_id !== '__EXAMCAT__' && sc.category_id)
@@ -1662,8 +1674,6 @@ function openEditStudentModal(username) {
       }
       _openModal();
     }).catch(() => _openModal());
-  } else {
-    _openModal();
   }
 }
 
@@ -2219,7 +2229,6 @@ function attemptLogin(raw, p, err) {
     err.style.display = 'block'; return;
   }
 
-  const sb = getSB();
   const finishLogin = function(finalUser) {
     currentUser = finalUser;
     sessionStorage.setItem('ssc_session', JSON.stringify(finalUser));
@@ -2233,8 +2242,8 @@ function attemptLogin(raw, p, err) {
   };
 
   // For students: fetch latest data directly from Supabase to get fresh assignedCategories
-  if (user.role === 'student' && sb) {
-    sb.from('users').select('*').eq('username', user.username).then(function(res) {
+  if (user.role === 'student') {
+    sbSelect('users', 'username=eq.' + encodeURIComponent(user.username)).then(function(res) {
       if (!res.error && res.data && res.data.length > 0) {
         const freshUser = rowToUser(res.data[0]);
         const idx = db.users.findIndex(u => u.username === user.username);
@@ -2327,7 +2336,6 @@ function checkSession() {
   syncFromSupabase().then(() => {
     hideLoadingOverlay();
 
-    const sb = getSB();
     const continueSession = function(freshUser) {
       if (!freshUser || freshUser.suspended) {
         sessionStorage.removeItem('ssc_session');
@@ -2344,13 +2352,13 @@ function checkSession() {
       goPage('home');
     };
 
-    if (saved.role === 'student' && sb) {
+    if (saved.role === 'student') {
       // For students: ALWAYS fetch latest data from Supabase directly
-      sb.from('users').select('*').eq('username', saved.username).then(res => {
+      sbSelect('users', 'username=eq.' + encodeURIComponent(saved.username)).then(function(res) {
         if (!res.error && res.data && res.data.length > 0) {
           const freshUser = rowToUser(res.data[0]);
           if (freshUser.password !== saved.password) {
-            sessionStorage.removeItem('ssc_session'); 
+            sessionStorage.removeItem('ssc_session');
             hideLoadingOverlay();
             return;
           }
@@ -2362,7 +2370,7 @@ function checkSession() {
           const localUser = db.users.find(u => u.username === saved.username && u.password === saved.password);
           continueSession(localUser || null);
         }
-      }).catch(() => {
+      }).catch(function() {
         const localUser = db.users.find(u => u.username === saved.username && u.password === saved.password);
         continueSession(localUser || null);
       });
@@ -2439,16 +2447,16 @@ function goPage(p, skipHistory) {
     mc.innerHTML = renderStudentsAdmin();
     updatePendingBadge();
     // Push subcategories silently
-    const _sbSync = getSB();
-    if (_sbSync && db.subcategories && db.subcategories.length > 0) {
+    // Push subcategories silently (uses XHR, no getSB needed)
+    if (db.subcategories && db.subcategories.length > 0) {
       db.subcategories.forEach(sc => { try { sbUpsert('subcategories', subcatToRow(sc)); } catch(e){} });
     }
     // Background fetch: only if no recent save
     const _timeSinceSave = Date.now() - (window._lastSaveTime || 0);
     if (_timeSinceSave > 30000 && !window._syncBlocked) {
-      const _sb2 = getSB();
-      if (_sb2) {
-        _sb2.from('users').select('*').then(res => {
+      // Background fetch using XHR
+      {
+        sbSelect('users', null).then(res => {
           if (!res.error && res.data && res.data.length > 0) {
             const remoteUsers = res.data.map(rowToUser);
             const merged = remoteUsers.map(ru => {
@@ -3919,13 +3927,10 @@ checkSession();
 // This ensures admin category changes reach students quickly
 setInterval(function() {
   if (!currentUser) return;
-  const sb = getSB();
-  if (!sb) return;
   // Pull current user's fresh data from Supabase
-  sb.from('users').select('*').eq('username', currentUser.username).then(res => {
+  sbSelect('users', 'username=eq.' + encodeURIComponent(currentUser.username)).then(function(res) {
     if (!res.error && res.data && res.data.length > 0) {
       const freshData = rowToUser(res.data[0]);
-      // Update db and currentUser with latest categories
       const idx = db.users.findIndex(u => u.username === currentUser.username);
       if (idx >= 0) db.users[idx] = freshData;
       currentUser.assignedCategories = freshData.assignedCategories || [];
@@ -3933,7 +3938,7 @@ setInterval(function() {
       sessionStorage.setItem('ssc_session', JSON.stringify(currentUser));
       try { localStorage.setItem(STORE, JSON.stringify(db)); } catch(e) {}
     }
-  }).catch(() => {});
+  }).catch(function() {});
   // Also push local data to Supabase
   db.users.forEach(u => { try { sbUpsert('users', userToRow(u)); } catch(e){} });
   db.tests.forEach(t => { try { sbUpsert('tests', testToRow(t)); } catch(e){} });
