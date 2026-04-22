@@ -1332,37 +1332,6 @@ function togglePublishTest(id) {
 //   ADMIN — QUESTION BANK
 // ═══════════════════════════════════════
 let qFilter = 'All';
-function renderQuestions() {
-  const filtered = qFilter==='All' ? db.questions : db.questions.filter(q=>q.subject===qFilter);
-  return `
-  ${backBtn()}
-  <div class="page-hdr"><h1>Question Bank</h1><p>${db.questions.length} questions total</p></div>
-  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem;flex-wrap:wrap;gap:8px">
-    <div class="filter-tabs" style="margin:0">
-      <button class="ftab ${qFilter==='All'?'active':''}" onclick="qFilter='All';goPage('questions')">All (${db.questions.length})</button>
-      ${SUBJECTS.map(s=>`<button class="ftab ${qFilter===s.id?'active':''}" onclick="qFilter='${s.id}';goPage('questions')">${s.id} (${db.questions.filter(q=>q.subject===s.id).length})</button>`).join('')}
-    </div>
-    <button class="btn btn-primary" onclick="openAddQModal()">+ Add Question</button>
-  </div>
-  <div class="card">
-    <div style="overflow-x:auto"><table class="admin-table">
-      <thead><tr><th>ID</th><th>Subject</th><th>Question</th><th>Options</th><th>Correct</th><th>Actions</th></tr></thead>
-      <tbody>
-        ${filtered.map(q=>`<tr>
-          <td style="font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--text3)">${q.id}</td>
-          <td><span style="font-size:11px;font-weight:700;padding:3px 8px;border-radius:9999px;background:${subBg(q.subject)};color:${subColor(q.subject)}">${q.subject}</span></td>
-          <td style="max-width:280px;font-size:12px">${q.text.substring(0,80)}${q.text.length>80?'...':''}</td>
-          <td style="font-size:11px;color:var(--text2)">${q.options.length} options</td>
-          <td style="font-family:'JetBrains Mono',monospace;color:var(--green);font-weight:700">${String.fromCharCode(65+q.correct)}</td>
-          <td style="white-space:nowrap">
-            <button class="btn btn-ghost btn-sm" onclick="openEditQModal(${q.id})">Edit</button>
-            <button class="btn btn-red btn-sm" onclick="deleteQ(${q.id})" style="margin-left:4px">Del</button>
-          </td>
-        </tr>`).join('')}
-      </tbody>
-    </table></div>
-  </div>`;
-}
 
 function openAddQModal() {
   showModal(`
@@ -2783,6 +2752,11 @@ function startTest(testId) {
     currentUser.assignedSubcategories = _su.assignedSubcategories || [];
     const allowed = currentUser.assignedCategories;
     if (!allowed.includes(test.examCategory)) { showToast('You are not assigned to this exam category.', 'error'); return; }
+    // Check subcategory lock
+    const allowedSubs = currentUser.assignedSubcategories || [];
+    if (allowedSubs.length > 0 && test.subcategoryId && !allowedSubs.includes(test.subcategoryId)) {
+      showToast('You are not assigned to this subcategory.', 'error'); return;
+    }
     // Block reattempt - students can only attempt each test once
     const alreadyAttempted = db.results.some(r => r.testId === test.id && r.username === currentUser.username);
     if (alreadyAttempted) { showToast('You have already attempted this test. Reattempt is not allowed.', 'error'); return; }
@@ -3088,7 +3062,7 @@ function saveNewTest() {
   window._newTestQuestions = [];
   saveDB();
   pushTestToSupabase(newTest);
-  pushQuestionsToSupabase(newQuestions);
+  pushQuestionsToSupabase(db.questions.filter(q => questionIds.includes(q.id)));
   closeModal(); goPage('admin');
   showToast('Test created with ' + questionIds.length + ' questions!', 'success');
 }
@@ -3168,7 +3142,7 @@ function saveEditTest(id) {
     negMarking: parseFloat(gV('et_neg'))||0.5
   };
   saveDB(); closeModal(); goPage('admin');
-  pushTestToSupabase(updatedTest);
+  pushTestToSupabase(db.tests[idx]);
   showToast('Test updated!', 'success');
 }
 
@@ -3758,11 +3732,88 @@ function saveEditQuestion(qId, testId) {
   openEditTestModal(testId);
 }
 
+function renderQuestion() {
+  const { questions, answers, marked, currentQ, test } = examState;
+  const q = questions[currentQ];
+  const subj = SUBJECTS.find(s => s.id === q.subject) || SUBJECTS[0];
+
+  const panel = document.getElementById('questionPanel');
+  panel.innerHTML = `
+    <div class="section-tabs">
+      ${SUBJECTS.map(s => {
+        const hasQ = questions.some(x=>x.subject===s.id);
+        if (!hasQ) return '';
+        return `<button class="sec-tab ${examState.currentSection===s.id?'active':''}" onclick="jumpToSection('${s.id}')">${s.id}</button>`;
+      }).join('')}
+      <button class="sec-tab ${examState.currentSection==='All'?'active':''}" onclick="jumpToSection('All')">All</button>
+    </div>
+    <div class="q-number">Question ${currentQ + 1} of ${questions.length}</div>
+    <span class="q-subject-tag" style="background:${subj.bg};color:${subj.color}">${subj.label}</span>
+    <div class="q-text">${q.text}</div>
+    ${q.image ? `<div style="margin:12px 0"><img src="${q.image}" alt="Question image" style="max-width:100%;max-height:320px;border-radius:10px;border:1px solid var(--border);display:block"></div>` : ''}
+    <div class="options-list">
+      ${q.options.map((opt, i) => `
+        <div class="option-item ${answers[currentQ]===i?'selected':''}" onclick="selectAnswer(${i})">
+          <div class="opt-letter">${String.fromCharCode(65+i)}</div>
+          ${opt}
+        </div>`).join('')}
+    </div>
+    <div class="q-actions">
+      <button class="btn btn-ghost btn-sm" onclick="clearAnswer()">Clear Response</button>
+      <button class="btn btn-sm" style="background:${marked[currentQ]?'var(--purple)':'none'};color:${marked[currentQ]?'#fff':'var(--purple)'};border-color:var(--purple)" onclick="toggleMark()">
+        ${marked[currentQ]?'★ Marked for Review':'☆ Mark for Review'}
+      </button>
+    </div>
+    <div class="q-nav">
+      <button class="btn btn-ghost btn-sm" onclick="navQ(-1)" ${currentQ===0?'disabled':''}>← Previous</button>
+      <span style="font-size:12px;color:var(--text3);flex:1;text-align:center">${currentQ+1} / ${questions.length}</span>
+      <button class="btn btn-primary btn-sm" onclick="navQ(1)" ${currentQ===questions.length-1?'disabled':''}>Next →</button>
+    </div>`;
+}
+
+
 function renderExam() {
   renderQuestion();
   renderPalette();
 }
 
+
+function renderQuestions() {
+  const filtered = qFilter==='All' ? db.questions : db.questions.filter(q=>q.subject===qFilter);
+  return `
+  ${backBtn()}
+  <div class="page-hdr"><h1>Question Bank</h1><p>${db.questions.length} questions total</p></div>
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem;flex-wrap:wrap;gap:8px">
+    <div class="filter-tabs" style="margin:0">
+      <button class="ftab ${qFilter==='All'?'active':''}" onclick="qFilter='All';goPage('questions')">All (${db.questions.length})</button>
+      ${SUBJECTS.map(s=>`<button class="ftab ${qFilter===s.id?'active':''}" onclick="qFilter='${s.id}';goPage('questions')">${s.id} (${db.questions.filter(q=>q.subject===s.id).length})</button>`).join('')}
+    </div>
+    <button class="btn btn-primary" onclick="openAddQModal()">+ Add Question</button>
+  </div>
+  <div class="card">
+    <div style="overflow-x:auto"><table class="admin-table">
+      <thead><tr><th>ID</th><th>Subject</th><th>Question</th><th>Options</th><th>Correct</th><th>Actions</th></tr></thead>
+      <tbody>
+        ${filtered.map(q=>`<tr>
+          <td style="font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--text3)">${q.id}</td>
+          <td><span style="font-size:11px;font-weight:700;padding:3px 8px;border-radius:9999px;background:${subBg(q.subject)};color:${subColor(q.subject)}">${q.subject}</span></td>
+          <td style="max-width:280px;font-size:12px">${q.text.substring(0,80)}${q.text.length>80?'...':''}</td>
+          <td style="font-size:11px;color:var(--text2)">${q.options.length} options</td>
+          <td style="font-family:'JetBrains Mono',monospace;color:var(--green);font-weight:700">${String.fromCharCode(65+q.correct)}</td>
+          <td style="white-space:nowrap">
+            <button class="btn btn-ghost btn-sm" onclick="openEditQModal(${q.id})">Edit</button>
+            <button class="btn btn-red btn-sm" onclick="deleteQ(${q.id})" style="margin-left:4px">Del</button>
+          </td>
+        </tr>`).join('')}
+      </tbody>
+    </table></div>
+  </div>`;
+}
+
+
+function deleteSubcatFromSupabase(id) {
+  sbDelete('subcategories', 'id', id);
+}
 
 loadDB();
 checkSession();
