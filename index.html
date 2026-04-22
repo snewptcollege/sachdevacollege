@@ -992,9 +992,22 @@ async function syncFromSupabase() {
     // For each remote user: if recently saved locally (_syncBlocked), keep local version
     // Otherwise trust Supabase (it has the latest data from any computer)
     if (window._syncBlocked) {
-      // Recent save - keep local users, only add new users from Supabase
+      // Recent save by admin - keep local users but ALWAYS update current user from Supabase
       const localUsernames = new Set(db.users.map(u => u.username));
       const newRemoteUsers = remoteUsers.filter(u => !localUsernames.has(u.username));
+      // Update existing users that have MORE categories in Supabase (admin assigned new ones)
+      db.users = db.users.map(localU => {
+        const remoteU = remoteUsers.find(r => r.username === localU.username);
+        if (!remoteU) return localU;
+        const localCats = (localU.assignedCategories || []).length;
+        const remoteCats = (remoteU.assignedCategories || []).length;
+        // If Supabase has MORE or DIFFERENT categories, use Supabase version
+        // This ensures admin category changes always propagate
+        const localCatStr = JSON.stringify((localU.assignedCategories||[]).sort());
+        const remoteCatStr = JSON.stringify((remoteU.assignedCategories||[]).sort());
+        if (localCatStr !== remoteCatStr || remoteCats > localCats) return remoteU;
+        return localU;
+      });
       db.users = [...db.users, ...newRemoteUsers];
     } else {
       // No recent save - trust Supabase completely (it's the source of truth)
@@ -1025,6 +1038,14 @@ async function syncFromSupabase() {
 
     localStorage.setItem(STORE, JSON.stringify(db));
     loadExamCategories();
+    // Always refresh currentUser after sync to get latest assignedCategories
+    if (currentUser) {
+      const freshUser = db.users.find(u => u.username === currentUser.username);
+      if (freshUser) {
+        currentUser = freshUser;
+        sessionStorage.setItem('ssc_session', JSON.stringify(freshUser));
+      }
+    }
     return true;
   } catch(err) {
     console.warn('Supabase sync failed:', err);
@@ -2490,13 +2511,13 @@ function renderHome() {
 
 function renderTests() {
   const isAdmin = currentUser && currentUser.role === 'admin';
-  // Always get fresh assignedCategories from db
+  // Always get fresh assignedCategories from db (catches admin reassignments)
   const _freshUser = db.users.find(u => u.username === currentUser.username) || currentUser;
-  const allowedCats = _freshUser.assignedCategories || [];
-  if (_freshUser !== currentUser) {
-    currentUser.assignedCategories = _freshUser.assignedCategories;
-    currentUser.assignedSubcategories = _freshUser.assignedSubcategories;
-  }
+  // Always update currentUser so admin changes take effect immediately
+  currentUser.assignedCategories = _freshUser.assignedCategories || [];
+  currentUser.assignedSubcategories = _freshUser.assignedSubcategories || [];
+  sessionStorage.setItem('ssc_session', JSON.stringify(currentUser));
+  const allowedCats = currentUser.assignedCategories;
   const visibleTests = isAdmin
     ? db.tests
     : db.tests.filter(t => t.published === true || t.published === 'true');
@@ -2746,10 +2767,11 @@ function startTest(testId) {
   if (!test) return;
   if (currentUser.role !== 'admin') {
     if (test.published !== true && test.published !== 'true') { showToast('This test is not available.', 'error'); return; }
-    // Get fresh user data to ensure latest category assignments
+    // Get fresh user data from db (ensures admin reassignments take effect)
     const _su = db.users.find(u => u.username === currentUser.username) || currentUser;
     currentUser.assignedCategories = _su.assignedCategories || [];
     currentUser.assignedSubcategories = _su.assignedSubcategories || [];
+    sessionStorage.setItem('ssc_session', JSON.stringify(currentUser));
     const allowed = currentUser.assignedCategories;
     if (!allowed.includes(test.examCategory)) { showToast('You are not assigned to this exam category.', 'error'); return; }
     // Check subcategory lock
@@ -3822,18 +3844,29 @@ checkSession();
 //   AUTO-SYNC TO SUPABASE
 // ═══════════════════════════════════════
 
-// Sync every 5 minutes while logged in - PUSH only (never pull/overwrite)
+// Every 2 minutes: pull latest user data from Supabase
+// This ensures admin category changes reach students quickly
 setInterval(function() {
   if (!currentUser) return;
   const sb = getSB();
   if (!sb) return;
-  // Only PUSH local data to Supabase, never pull (to avoid overwriting category assignments)
+  // Pull current user's fresh data from Supabase
+  sb.from('users').select('*').eq('username', currentUser.username).then(res => {
+    if (!res.error && res.data && res.data.length > 0) {
+      const freshData = rowToUser(res.data[0]);
+      // Update db and currentUser with latest categories
+      const idx = db.users.findIndex(u => u.username === currentUser.username);
+      if (idx >= 0) db.users[idx] = freshData;
+      currentUser.assignedCategories = freshData.assignedCategories || [];
+      currentUser.assignedSubcategories = freshData.assignedSubcategories || [];
+      sessionStorage.setItem('ssc_session', JSON.stringify(currentUser));
+      try { localStorage.setItem(STORE, JSON.stringify(db)); } catch(e) {}
+    }
+  }).catch(() => {});
+  // Also push local data to Supabase
   db.users.forEach(u => { try { sbUpsert('users', userToRow(u)); } catch(e){} });
   db.tests.forEach(t => { try { sbUpsert('tests', testToRow(t)); } catch(e){} });
-  if (db.questions && db.questions.length) {
-    try { sbUpsert('questions', db.questions.map(q => questionToRow(q))); } catch(e){}
-  }
-}, 5 * 60 * 1000);
+}, 2 * 60 * 1000);
 
 // Sync when user returns to the tab (visibility change)
 document.addEventListener('visibilitychange', function() {
