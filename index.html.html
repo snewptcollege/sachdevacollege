@@ -688,31 +688,13 @@ function sbRequest(method, table, data, filter) {
 }
 
 function sbUpsert(table, data) {
-  const sb = getSB();
-  if (!sb) return Promise.resolve({ ok: false });
   const payload = Array.isArray(data) ? data : [data];
   const conflictCol = table === 'users' ? 'username' : 'id';
-  return sb.from(table).upsert(payload, { onConflict: conflictCol })
-    .then(function(res) {
-      if (res.error) console.warn('[Supabase] upsert', table, res.error.message);
-      return { ok: !res.error };
-    }).catch(function(e) {
-      console.warn('[Supabase] upsert error:', table, e.message);
-      return { ok: false };
-    });
+  return sbRequest('POST', table, payload, 'on_conflict=' + conflictCol);
 }
 
 function sbDelete(table, field, value) {
-  const sb = getSB();
-  if (!sb) return Promise.resolve({ ok: false });
-  return sb.from(table).delete().eq(field, value)
-    .then(function(res) {
-      if (res.error) console.warn('[Supabase] delete', table, res.error.message);
-      return { ok: !res.error };
-    }).catch(function(e) {
-      console.warn('[Supabase] delete error:', table, e.message);
-      return { ok: false };
-    });
+  return sbRequest('DELETE', table, null, field + '=eq.' + encodeURIComponent(value));
 }
 
 // XHR-based SELECT - avoids DataCloneError on GitHub Pages
@@ -3289,12 +3271,102 @@ function openEditTestModal(id) {
           <label style="margin:0">Questions (${t.questions.length} total)</label>
         </div>
         <div id="edit_qlist">${renderEditQList()}</div>
+
+        <!-- Add new question builder -->
+        <div style="margin-top:16px;border:2px dashed var(--primary-border);border-radius:var(--radius);padding:16px;background:var(--primary-bg)">
+          <div style="font-size:12px;font-weight:700;color:var(--primary);text-transform:uppercase;letter-spacing:.05em;margin-bottom:12px">➕ Add New Question to this Test</div>
+          
+          <div class="fg fg-full" style="margin-bottom:10px">
+            <label>Subject</label>
+            <select id="eq_new_subject" onchange="toggleEditCustomSubject(this)" style="width:100%;padding:9px 12px;border:1.5px solid var(--border2);border-radius:var(--radius);font-size:13px;font-family:inherit;background:var(--surface)">
+              ${SUBJECTS.map(s=>'<option value="'+s.id+'">'+s.label+'</option>').join('')}
+              <option value="__custom__">+ Add custom subject...</option>
+            </select>
+            <input id="eq_new_custom_subject" placeholder="Type subject name..." style="display:none;margin-top:6px;width:100%;padding:9px 12px;border:1.5px solid var(--primary);border-radius:var(--radius);font-size:13px;font-family:inherit;background:var(--surface);box-sizing:border-box">
+          </div>
+
+          <div class="fg fg-full" style="margin-bottom:10px">
+            <label>Question Text <span style="color:var(--red)">*</span></label>
+            <textarea id="eq_new_text" rows="3" placeholder="Write your question here..." style="width:100%;resize:vertical"></textarea>
+          </div>
+
+          <div class="fg fg-full" style="margin-bottom:12px">
+            <label>Options & Correct Answer <span style="color:var(--red)">*</span></label>
+            ${['A','B','C','D','E'].map((ltr,i) =>
+              '<div style="display:flex;align-items:center;gap:8px;margin-bottom:7px">'+
+              '<input type="radio" name="eq_new_correct" value="'+i+'" id="eq_new_r'+i+'" style="cursor:pointer;accent-color:var(--primary)">'+
+              '<label for="eq_new_r'+i+'" style="width:22px;font-weight:700;color:var(--primary);flex-shrink:0;cursor:pointer">'+ltr+'.</label>'+
+              '<input id="eq_new_opt'+i+'" type="text" placeholder="Option '+ltr+'" style="flex:1;padding:8px 12px;border:1.5px solid var(--border2);border-radius:var(--radius);font-size:13px;font-family:inherit;background:var(--surface)">'+
+              '</div>'
+            ).join('')}
+            <div style="font-size:11px;color:var(--text3);margin-top:4px">● Select the radio button next to the correct answer</div>
+          </div>
+
+          <div class="fg fg-full" style="margin-bottom:12px">
+            <label>Explanation <span style="color:var(--text3);font-weight:400">(optional)</span></label>
+            <textarea id="eq_new_explanation" rows="2" placeholder="Explain why the correct answer is right..." style="width:100%;padding:10px;border:1.5px solid var(--border2);border-radius:var(--radius);font-size:13px;font-family:inherit;resize:vertical"></textarea>
+          </div>
+
+          <div style="display:flex;justify-content:flex-end">
+            <button class="btn btn-primary" onclick="addQuestionToEditTest(${id})">+ Add Question to Test</button>
+          </div>
+        </div>
       </div>
     </div>
     <div class="form-actions">
       <button class="btn btn-ghost" onclick="closeModal()">Cancel</button>
       <button class="btn btn-primary" onclick="saveEditTest(${id})">Save Changes</button>
     </div>`);
+}
+
+
+function toggleEditCustomSubject(sel) {
+  const customInput = document.getElementById('eq_new_custom_subject');
+  if (!customInput) return;
+  if (sel.value === '__custom__') {
+    customInput.style.display = 'block';
+    customInput.focus();
+  } else {
+    customInput.style.display = 'none';
+    customInput.value = '';
+  }
+}
+
+function addQuestionToEditTest(testId) {
+  const text = (document.getElementById('eq_new_text')?.value || '').trim();
+  const opts = [0,1,2,3,4].map(i => (document.getElementById('eq_new_opt'+i)?.value || '').trim());
+  const correctRadio = document.querySelector('input[name="eq_new_correct"]:checked');
+  const subSel = document.getElementById('eq_new_subject');
+  let subject = subSel ? subSel.value : 'GIR';
+  if (subject === '__custom__') {
+    subject = (document.getElementById('eq_new_custom_subject')?.value || '').trim() || 'General';
+  }
+  const explanation = (document.getElementById('eq_new_explanation')?.value || '').trim();
+
+  if (!text) { showToast('Question text is required', 'error'); return; }
+  if (opts.filter(o=>o).length < 2) { showToast('Add at least 2 options', 'error'); return; }
+  if (!correctRadio) { showToast('Select the correct answer', 'error'); return; }
+
+  const correct = parseInt(correctRadio.value);
+  const newQ = {
+    id: Math.max(0, ...db.questions.map(q=>q.id)) + 1,
+    subject, text, options: opts, correct, explanation, image: null
+  };
+
+  // Add to question bank
+  db.questions.push(newQ);
+
+  // Add to this test
+  const testIdx = db.tests.findIndex(t => t.id === testId);
+  if (testIdx >= 0) {
+    db.tests[testIdx].questions.push(newQ.id);
+    saveDB();
+    pushTestToSupabase(db.tests[testIdx]);
+    pushQuestionsToSupabase([newQ]);
+    showToast('Question added to test!', 'success');
+    // Refresh the modal
+    openEditTestModal(testId);
+  }
 }
 
 function saveEditTest(id) {
