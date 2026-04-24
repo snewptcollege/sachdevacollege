@@ -1540,7 +1540,18 @@ function openEditQModal(id) {
     <div class="form-grid">
       <div class="fg"><label>Subject</label><select id="eq_sub">${SUBJECTS.map(s=>'<option value="'+s.id+'" '+(q.subject===s.id?'selected':'')+'>'+s.label+'</option>').join('')}</select></div>
       <div class="fg"><label>Correct Answer</label><select id="eq_correct">${['A','B','C','D'].map((l,i)=>'<option value="'+i+'" '+(q.correct===i?'selected':'')+'>'+l+'</option>').join('')}</select></div>
-      <div class="fg fg-full"><label>Question Text</label>${buildFormatToolbar('eq_text_editor')}</div>
+      <div class="fg fg-full"><label>Question Text</label>
+        <div style="display:flex;flex-wrap:wrap;gap:4px;padding:6px 8px;background:var(--surface);border:1.5px solid var(--border2);border-bottom:none;border-radius:var(--radius) var(--radius) 0 0">
+          ${['<b>B</b>','<i>I</i>','<u>U</u>','<s>S</s>'].map((icon,i) => {
+            const cmds=['bold','italic','underline','strikethrough'];
+            return '<button type="button" onclick="applyFmt(\''+cmds[i]+'\',\'eq_text_editor\')" style="min-width:28px;height:26px;padding:0 6px;border:1.5px solid var(--border2);border-radius:4px;background:var(--bg);cursor:pointer;font-size:13px;font-family:inherit">'+icon+'</button>';
+          }).join('')}
+        </div>
+        <div id="eq_text_editor" contenteditable="true" 
+          style="width:100%;min-height:80px;padding:10px 12px;border:1.5px solid var(--border2);border-top:none;border-radius:0 0 var(--radius) var(--radius);font-size:13px;font-family:inherit;background:var(--surface);color:var(--text1);outline:none;overflow-y:auto;box-sizing:border-box"
+          oninput="syncQText('eq_text_editor')">${q.text || ''}</div>
+        <input type="hidden" id="eq_text_editor_val" value="${q.text || ''}">
+      </div>
       <div class="fg"><label>Option A</label><input id="eq_oa" value="${q.options[0]}"></div>
       <div class="fg"><label>Option B</label><input id="eq_ob" value="${q.options[1]}"></div>
       <div class="fg"><label>Option C</label><input id="eq_oc" value="${q.options[2]}"></div>
@@ -1550,7 +1561,6 @@ function openEditQModal(id) {
       <button class="btn btn-ghost" onclick="closeModal()">Cancel</button>
       <button class="btn btn-primary" onclick="saveEditQ(${id})">Save</button>
     </div>`);
-  setTimeout(function() { setQText('eq_text_editor', q.text || ''); }, 30);
 }
 
 function saveEditQ(id) {
