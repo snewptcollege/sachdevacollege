@@ -945,12 +945,22 @@ function loadDB() {
   }
   // Auto-assign student IDs if missing
   let idCounter = 1;
+  let anyNewIds = false;
   db.users.filter(u => u.role === 'student').sort((a,b) => new Date(a.registeredAt||0) - new Date(b.registeredAt||0)).forEach(u => {
     if (!u.studentId) {
       u.studentId = 'SC' + String(idCounter).padStart(4, '0');
+      anyNewIds = true;
     }
     idCounter++;
   });
+  // Push new IDs to Supabase after a short delay
+  if (anyNewIds) {
+    setTimeout(function() {
+      db.users.filter(u => u.role === 'student' && u.studentId).forEach(u => {
+        sbUpsert('users', userToRow(u));
+      });
+    }, 2000);
+  }
   loadExamCategories();
   const savedTime = localStorage.getItem('myelearner_last_save');
   if (savedTime) {
@@ -967,6 +977,16 @@ function loadDB() {
 function normalizeSubcat(sc) {
   const catId = sc.categoryId || sc.category_id || '';
   return { ...sc, categoryId: catId, category_id: catId };
+}
+
+function getStudentId(u) {
+  // Generate consistent ID from username if not assigned yet
+  if (u.studentId) return u.studentId;
+  // Find student index in sorted list
+  const students = db.users.filter(x => x.role === 'student')
+    .sort((a,b) => new Date(a.registeredAt||a.registeredOn||0) - new Date(b.registeredAt||b.registeredOn||0));
+  const idx = students.findIndex(x => x.username === u.username);
+  return 'SC' + String(idx + 1).padStart(4, '0');
 }
 
 function _renderStudentsTable() {
@@ -1634,11 +1654,9 @@ function renderStudentsAdmin() {
                 ? '<span class="active-badge">✓ Active</span>'
                 : '<span class="pending-badge">⏳ Pending</span>';
             // Auto-assign ID if not present
-              if (!u.studentId) {
-                u.studentId = 'SC' + String(allStuds.indexOf(u) + 1).padStart(4, '0');
-              }
+              const _sid = u.studentId || getStudentId(u);
               return '<tr>'
-              + '<td><div style="font-family:monospace;font-weight:700;font-size:13px;color:var(--primary)">' + u.studentId + '</div></td>'
+              + '<td><div style="font-family:monospace;font-weight:700;font-size:13px;color:var(--primary)">' + _sid + '</div></td>'
               + '<td><div style="font-weight:700">' + u.name + '</div><div style="font-size:11px;color:var(--text3)">' + (u.registeredOn||'') + '</div></td>'
               + '<td style="font-size:12px"><div>' + (u.email||u.username) + '</div><div style="color:var(--text2)">' + (u.phone||'') + '</div></td>'
               + '<td><span style="font-size:12px;font-family:monospace;background:var(--surface2);padding:3px 8px;border-radius:var(--radius);border:1px solid var(--border);color:var(--text2)">' + (u.password||'') + '</span></td>'
@@ -2150,7 +2168,7 @@ function renderStudentProfile() {
     + '<div style="font-size:13px;color:var(--text2);margin-top:2px">' + (u.email||u.username) + '</div>'
     + (u.phone?'<div style="font-size:13px;color:var(--text2)">'+u.phone+'</div>':'')
     + '<span style="display:inline-block;margin-top:6px;background:var(--blue-bg);color:var(--blue);font-size:11px;font-weight:700;padding:3px 12px;border-radius:9999px;border:1px solid var(--blue-light);text-transform:uppercase">Student</span>'
-    + (u.studentId ? '<span style="display:inline-block;margin-top:6px;margin-left:6px;background:var(--primary-bg);color:var(--primary);font-size:11px;font-weight:700;padding:3px 12px;border-radius:9999px;border:1px solid var(--primary-light)">🪪 ID: ' + u.studentId + '</span>' : '')
+    + '<span style="display:inline-block;margin-top:6px;margin-left:6px;background:var(--primary-bg);color:var(--primary);font-size:11px;font-weight:700;padding:3px 12px;border-radius:9999px;border:1px solid var(--primary-light)">🪪 ID: ' + (u.studentId || getStudentId(u)) + '</span>'
     + '</div></div>'
     + '<div class="card"><div style="font-size:14px;font-weight:800;margin-bottom:1.25rem">Change Password</div>'
     + '<div class="fg" style="margin-bottom:12px"><label>Current Password</label><input id="sp_cur_pw" type="password" placeholder="Enter current password"></div>'
