@@ -1517,7 +1517,8 @@ function setQText(targetId, html) {
 
 
 function saveNewQ() {
-  const text = gV('q_text'), oa=gV('q_oa'), ob=gV('q_ob'), oc=gV('q_oc'), od=gV('q_od');
+  const text = (getQText('q_text_editor') || '').trim();
+  const oa=gV('q_oa'), ob=gV('q_ob'), oc=gV('q_oc'), od=gV('q_od');
   if (!text||!oa||!ob||!oc||!od) { showToast('All fields required','error'); return; }
   const newQ = {
     id: Math.max(0,...db.questions.map(q=>q.id))+1,
@@ -3649,7 +3650,7 @@ function confirmSubmitExam() {
 }
 
 function addQuestionToNewTest() {
-  const text = (document.getElementById('nq_text').value || '').trim();
+  const text = (getQText('nq_text_editor') || '').trim();
   const opts = [0,1,2,3,4].map(i => (document.getElementById('nq_opt'+i).value || '').trim());
   const correctRadio = document.querySelector('input[name="nq_correct"]:checked');
   const subject = getSelectedSubject();
