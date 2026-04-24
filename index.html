@@ -1550,13 +1550,14 @@ function openEditQModal(id) {
       <button class="btn btn-ghost" onclick="closeModal()">Cancel</button>
       <button class="btn btn-primary" onclick="saveEditQ(${id})">Save</button>
     </div>`);
+  setTimeout(function() { setQText('eq_text_editor', q.text || ''); }, 30);
 }
 
 function saveEditQ(id) {
   const idx = db.questions.findIndex(x=>x.id===id);
   if (idx<0) return;
   db.questions[idx] = { ...db.questions[idx],
-    subject: gV('eq_sub'), text: gV('eq_text'),
+    subject: gV('eq_sub'), text: (getQText('eq_text_editor') || '').trim(),
     options: [gV('eq_oa'),gV('eq_ob'),gV('eq_oc'),gV('eq_od')],
     correct: parseInt(gV('eq_correct'))
   };
