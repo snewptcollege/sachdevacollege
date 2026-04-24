@@ -992,6 +992,8 @@ function getStudentId(u) {
 function _renderStudentsTable() {
   const mc = document.getElementById('pageContent');
   if (!mc) return;
+  // Don't re-render if a modal is open
+  if (document.getElementById('globalModal')) return;
   mc.innerHTML = renderStudentsAdmin();
   updatePendingBadge();
   // Restore focus to search input
@@ -1666,7 +1668,7 @@ function renderStudentsAdmin() {
               + '<td style="font-size:13px">' + rr.length + (best ? ' <span style="color:var(--green);font-size:11px">('+best+'%)</span>' : '') + '</td>'
               + '<td>' + statusBadge + '</td>'
               + '<td style="white-space:nowrap">'
-              + '<button class="btn btn-ghost btn-sm" onclick="openEditStudentModal(\''+u.username+'\')">Edit</button>'
+              + '<button class="btn btn-ghost btn-sm" onclick="openEditStudentModal(\'' + u.username + '\')" >Edit</button>'
               + '<button class="btn btn-ghost btn-sm" onclick="openResetPwModal(\'' + u.username + '\')" style="margin-left:4px">PW</button>'
               + '<button class="btn btn-sm" style="margin-left:4px;border-color:' + (u.suspended?'var(--green)':'var(--amber)') + ';color:' + (u.suspended?'var(--green)':'var(--amber)') + '" onclick="toggleSuspend(\'' + u.username + '\')">'
               + (u.suspended ? 'Restore' : 'Suspend')
@@ -4226,8 +4228,10 @@ setInterval(function() {
         db.users = res.data.map(rowToUser);
         try { localStorage.setItem(STORE, JSON.stringify(db)); } catch(e) {}
         updatePendingBadge();
+        // Only re-render if no modal is open
         const mc = document.getElementById('pageContent');
-        if (mc && currentPage === 'students-admin') {
+        const modalOpen = !!document.getElementById('globalModal');
+        if (mc && currentPage === 'students-admin' && !modalOpen) {
           mc.innerHTML = renderStudentsAdmin();
           updatePendingBadge();
         }
@@ -4256,7 +4260,8 @@ setInterval(function() {
         // If categories changed, re-render current page
         if (oldCats !== newCats) {
           const mc = document.getElementById('pageContent');
-          if (mc) {
+          const modalOpen2 = !!document.getElementById('globalModal');
+          if (mc && !modalOpen2) {
             if (currentPage === 'home') mc.innerHTML = renderHome();
             else if (currentPage === 'tests') mc.innerHTML = renderTests();
           }
