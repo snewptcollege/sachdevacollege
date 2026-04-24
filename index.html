@@ -4163,9 +4163,30 @@ setInterval(function() {
       try { localStorage.setItem(STORE, JSON.stringify(db)); } catch(e) {}
     }
   }).catch(function() {});
-  // Also push local data to Supabase
-  db.users.forEach(u => { try { sbUpsert('users', userToRow(u)); } catch(e){} });
-  db.tests.forEach(t => { try { sbUpsert('tests', testToRow(t)); } catch(e){} });
+  // For ADMIN: pull ALL users from Supabase to get latest changes from other admins
+  if (currentUser && currentUser.role === 'admin' && !window._syncBlocked) {
+    sbSelect('users', null).then(function(res) {
+      if (!res.error && res.data && res.data.length > 0) {
+        const remoteUsers = res.data.map(rowToUser);
+        // Trust Supabase completely for admin sync (no recent local save)
+        const adminUser = db.users.find(u => u.role === 'admin' && u.username === currentUser.username);
+        db.users = remoteUsers;
+        // Re-render student management if open
+        try { localStorage.setItem(STORE, JSON.stringify(db)); } catch(e) {}
+        updatePendingBadge();
+        const mc = document.getElementById('pageContent');
+        if (mc && currentPage === 'students-admin') {
+          mc.innerHTML = renderStudentsAdmin();
+          updatePendingBadge();
+        }
+      }
+    }).catch(function() {});
+  }
+  // Push local data to Supabase
+  if (!window._syncBlocked) {
+    db.users.forEach(u => { try { sbUpsert('users', userToRow(u)); } catch(e){} });
+    db.tests.forEach(t => { try { sbUpsert('tests', testToRow(t)); } catch(e){} });
+  }
 }, 30 * 1000);
 
 // Sync when user returns to the tab (visibility change)
