@@ -1539,7 +1539,7 @@ function openEditQModal(id) {
     <div class="modal-hdr"><h3>Edit Question</h3><button class="close-btn" onclick="closeModal()">×</button></div>
     <div class="form-grid" style="overflow-y:auto;flex:1;padding-right:4px">
       <div class="fg"><label>Subject</label><select id="eq_sub">${SUBJECTS.map(s=>'<option value="'+s.id+'" '+(q.subject===s.id?'selected':'')+'>'+s.label+'</option>').join('')}</select></div>
-      <div class="fg"><label>Correct Answer</label><select id="eq_correct">${['A','B','C','D'].map((l,i)=>'<option value="'+i+'" '+(q.correct===i?'selected':'')+'>'+l+'</option>').join('')}</select></div>
+      <div class="fg"><label>Correct Answer</label><select id="eq_correct">${['A','B','C','D','E'].map((l,i)=>'<option value="'+i+'" '+(q.correct===i?'selected':'')+'>'+l+'</option>').join('')}</select></div>
       <div class="fg fg-full"><label>Question Text</label>
         <div style="display:flex;flex-wrap:wrap;gap:4px;padding:6px 8px;background:var(--surface);border:1.5px solid var(--border2);border-bottom:none;border-radius:var(--radius) var(--radius) 0 0">
           ${['<b>B</b>','<i>I</i>','<u>U</u>','<s>S</s>'].map((icon,i) => {
@@ -1552,16 +1552,26 @@ function openEditQModal(id) {
           oninput="syncQText('eq_text_editor')"></div>
         <input type="hidden" id="eq_text_editor_val">
       </div>
+      <div class="fg fg-full"><label>Question Image <span style="color:var(--text3);font-weight:400">(optional)</span></label>
+        <div style="border:1.5px dashed var(--border2);border-radius:var(--radius);padding:10px 12px;background:var(--surface)">
+          <input type="file" accept="image/*" id="eq_img_file" onchange="previewEqImgEdit(this)">
+        </div>
+        <div id="eq_img_preview_edit" style="margin-top:8px">${q.image ? '<img src="'+q.image+'" style="max-width:100%;max-height:150px;border-radius:var(--radius);border:1px solid var(--border)">' : ''}</div>
+      </div>
       <div class="fg"><label>Option A</label><input id="eq_oa" value="${q.options[0]||''}"></div>
       <div class="fg"><label>Option B</label><input id="eq_ob" value="${q.options[1]||''}"></div>
       <div class="fg"><label>Option C</label><input id="eq_oc" value="${q.options[2]||''}"></div>
       <div class="fg"><label>Option D</label><input id="eq_od" value="${q.options[3]||''}"></div>
+      <div class="fg"><label>Option E <span style="color:var(--text3);font-weight:400">(optional)</span></label><input id="eq_oe" value="${q.options[4]||''}"></div>
+      <div class="fg fg-full"><label>Explanation <span style="color:var(--text3);font-weight:400">(optional)</span></label>
+        <textarea id="eq_explanation" rows="2" style="width:100%;padding:10px;border:1.5px solid var(--border2);border-radius:var(--radius);font-size:13px;font-family:inherit;resize:vertical">${q.explanation||''}</textarea>
+      </div>
     </div>
     <div class="form-actions">
       <button class="btn btn-ghost" onclick="closeModal()">Cancel</button>
       <button class="btn btn-primary" onclick="saveEditQ(${id})">Save</button>
     </div>`);
-  // Set question text AFTER modal renders to avoid HTML injection issues
+  window._editQImgData = q.image || null;
   setTimeout(function() {
     const el = document.getElementById('eq_text_editor');
     if (el) el.innerHTML = q.text || '';
@@ -1570,13 +1580,29 @@ function openEditQModal(id) {
 }
 
 
+function previewEqImgEdit(input) {
+  if (!input.files || !input.files[0]) return;
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    window._editQImgData = e.target.result;
+    const preview = document.getElementById('eq_img_preview_edit');
+    if (preview) preview.innerHTML = '<img src="'+e.target.result+'" style="max-width:100%;max-height:150px;border-radius:var(--radius);border:1px solid var(--border)">';
+  };
+  reader.readAsDataURL(input.files[0]);
+}
+
 function saveEditQ(id) {
   const idx = db.questions.findIndex(x=>x.id===id);
   if (idx<0) return;
+  const opts = [gV('eq_oa'),gV('eq_ob'),gV('eq_oc'),gV('eq_od')];
+  const oe = gV('eq_oe'); if (oe) opts.push(oe);
   db.questions[idx] = { ...db.questions[idx],
-    subject: gV('eq_sub'), text: (getQText('eq_text_editor') || '').trim(),
-    options: [gV('eq_oa'),gV('eq_ob'),gV('eq_oc'),gV('eq_od')],
-    correct: parseInt(gV('eq_correct'))
+    subject: gV('eq_sub'),
+    text: (getQText('eq_text_editor') || '').trim(),
+    options: opts,
+    correct: parseInt(gV('eq_correct')),
+    explanation: gV('eq_explanation') || db.questions[idx].explanation || '',
+    image: window._editQImgData !== undefined ? window._editQImgData : db.questions[idx].image
   };
   saveDB(); closeModal(); goPage('questions');
   pushQuestionsToSupabase([db.questions[idx]]);
@@ -2157,11 +2183,13 @@ function showModal(html) {
   div.onclick = e => { if(e.target===div) closeModal(); };
   div.innerHTML = '<div class="modal">'+html+'</div>';
   document.body.appendChild(div);
+  document.body.style.overflow = 'hidden';
 }
 
 function closeModal() {
   const el = document.getElementById('globalModal');
   if (el) el.remove();
+  document.body.style.overflow = '';
 }
 
 function showConfirm(message, onConfirm, type='warn') {
