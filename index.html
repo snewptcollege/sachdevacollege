@@ -1547,21 +1547,28 @@ function openEditQModal(id) {
             return '<button type="button" onclick="applyFmt(\''+cmds[i]+'\',\'eq_text_editor\')" style="min-width:28px;height:26px;padding:0 6px;border:1.5px solid var(--border2);border-radius:4px;background:var(--bg);cursor:pointer;font-size:13px;font-family:inherit">'+icon+'</button>';
           }).join('')}
         </div>
-        <div id="eq_text_editor" contenteditable="true" 
+        <div id="eq_text_editor" contenteditable="true"
           style="width:100%;min-height:80px;max-height:150px;padding:10px 12px;border:1.5px solid var(--border2);border-top:none;border-radius:0 0 var(--radius) var(--radius);font-size:13px;font-family:inherit;background:var(--surface);color:var(--text1);outline:none;overflow-y:auto;box-sizing:border-box"
-          oninput="syncQText('eq_text_editor')">${q.text || ''}</div>
-        <input type="hidden" id="eq_text_editor_val" value="${q.text || ''}">
+          oninput="syncQText('eq_text_editor')"></div>
+        <input type="hidden" id="eq_text_editor_val">
       </div>
-      <div class="fg"><label>Option A</label><input id="eq_oa" value="${q.options[0]}"></div>
-      <div class="fg"><label>Option B</label><input id="eq_ob" value="${q.options[1]}"></div>
-      <div class="fg"><label>Option C</label><input id="eq_oc" value="${q.options[2]}"></div>
-      <div class="fg"><label>Option D</label><input id="eq_od" value="${q.options[3]}"></div>
+      <div class="fg"><label>Option A</label><input id="eq_oa" value="${q.options[0]||''}"></div>
+      <div class="fg"><label>Option B</label><input id="eq_ob" value="${q.options[1]||''}"></div>
+      <div class="fg"><label>Option C</label><input id="eq_oc" value="${q.options[2]||''}"></div>
+      <div class="fg"><label>Option D</label><input id="eq_od" value="${q.options[3]||''}"></div>
     </div>
     <div class="form-actions">
       <button class="btn btn-ghost" onclick="closeModal()">Cancel</button>
       <button class="btn btn-primary" onclick="saveEditQ(${id})">Save</button>
     </div>`);
+  // Set question text AFTER modal renders to avoid HTML injection issues
+  setTimeout(function() {
+    const el = document.getElementById('eq_text_editor');
+    if (el) el.innerHTML = q.text || '';
+    syncQText('eq_text_editor');
+  }, 30);
 }
+
 
 function saveEditQ(id) {
   const idx = db.questions.findIndex(x=>x.id===id);
