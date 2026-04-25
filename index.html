@@ -1455,7 +1455,7 @@ let qFilter = 'All';
 function openAddQModal() {
   showModal(`
     <div class="modal-hdr"><h3>Add Question</h3><button class="close-btn" onclick="closeModal()">×</button></div>
-    <div class="form-grid">
+    <div class="form-grid" style="max-height:60vh;overflow-y:auto;padding-right:4px">
       <div class="fg"><label>Subject</label><select id="q_sub">${SUBJECTS.map(s=>'<option value="'+s.id+'">'+s.label+'</option>').join('')}</select></div>
       <div class="fg"><label>Correct Answer</label><select id="q_correct"><option value="0">A</option><option value="1">B</option><option value="2">C</option><option value="3">D</option></select></div>
       <div class="fg fg-full"><label>Question Text</label>${buildFormatToolbar('q_text_editor')}</div>
@@ -1537,7 +1537,7 @@ function openEditQModal(id) {
   if (!q) return;
   showModal(`
     <div class="modal-hdr"><h3>Edit Question</h3><button class="close-btn" onclick="closeModal()">×</button></div>
-    <div class="form-grid">
+    <div class="form-grid" style="max-height:60vh;overflow-y:auto;padding-right:4px">
       <div class="fg"><label>Subject</label><select id="eq_sub">${SUBJECTS.map(s=>'<option value="'+s.id+'" '+(q.subject===s.id?'selected':'')+'>'+s.label+'</option>').join('')}</select></div>
       <div class="fg"><label>Correct Answer</label><select id="eq_correct">${['A','B','C','D'].map((l,i)=>'<option value="'+i+'" '+(q.correct===i?'selected':'')+'>'+l+'</option>').join('')}</select></div>
       <div class="fg fg-full"><label>Question Text</label>
@@ -1548,7 +1548,7 @@ function openEditQModal(id) {
           }).join('')}
         </div>
         <div id="eq_text_editor" contenteditable="true" 
-          style="width:100%;min-height:80px;padding:10px 12px;border:1.5px solid var(--border2);border-top:none;border-radius:0 0 var(--radius) var(--radius);font-size:13px;font-family:inherit;background:var(--surface);color:var(--text1);outline:none;overflow-y:auto;box-sizing:border-box"
+          style="width:100%;min-height:80px;max-height:150px;padding:10px 12px;border:1.5px solid var(--border2);border-top:none;border-radius:0 0 var(--radius) var(--radius);font-size:13px;font-family:inherit;background:var(--surface);color:var(--text1);outline:none;overflow-y:auto;box-sizing:border-box"
           oninput="syncQText('eq_text_editor')">${q.text || ''}</div>
         <input type="hidden" id="eq_text_editor_val" value="${q.text || ''}">
       </div>
